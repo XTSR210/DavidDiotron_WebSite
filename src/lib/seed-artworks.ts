@@ -1,0 +1,139 @@
+import type { Artwork } from "./types";
+
+/**
+ * Seed catalogue bundled with the site: real works by David Drioton sourced
+ * from his public iCanvas/ARTree listings (images mirrored into
+ * `public/artworks`). `data/artworks.json` overrides this once the admin tab
+ * is used.
+ */
+export const seedArtworks: Artwork[] = [
+  {
+    id: "pink-paint-graffiti",
+    title: "Pink Paint Graffiti",
+    technique: "Technique mixte sur toile",
+    image: "/artworks/art-01.jpg",
+    source: "iCanvas (David Drioton)",
+    note: "Pop art, éclats d'affiches et graffiti rose.",
+  },
+  {
+    id: "newspaper-collage",
+    title: "Newspaper Collage",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-02.jpg",
+    source: "iCanvas (David Drioton)",
+    note: "Fragments d'affiches déchirées, icônes de la POP.",
+  },
+  {
+    id: "collage-iii",
+    title: "Collage N°3",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-03.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "collage-iv",
+    title: "Collage N°4",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-04.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "rainbow-paint-collage",
+    title: "Rainbow Paint Collage",
+    technique: "Technique mixte sur toile",
+    image: "/artworks/art-05.jpg",
+    source: "iCanvas (David Drioton)",
+    note: "Tourbillons de couleur, esprit Pollock.",
+  },
+  {
+    id: "collage-vi",
+    title: "Collage N°6",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-06.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "graffiti-vii",
+    title: "Graffiti N°7",
+    technique: "Technique mixte sur toile",
+    image: "/artworks/art-07.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "collage-viii",
+    title: "Collage N°8",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-08.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "collage-ix",
+    title: "Collage N°9",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-09.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "collage-x",
+    title: "Collage N°10",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-10.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "collage-xi",
+    title: "Collage N°11",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-11.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "collage-xii",
+    title: "Collage N°12",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-12.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "collage-xiii",
+    title: "Collage N°13",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-13.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "collage-xiv",
+    title: "Collage N°14",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-14.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "collage-xv",
+    title: "Collage N°15",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-15.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "collage-xvi",
+    title: "Collage N°16",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-16.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "collage-xvii",
+    title: "Collage N°17",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-17.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+  {
+    id: "collage-xviii",
+    title: "Collage N°18",
+    technique: "Technique mixte, collages d'affiches",
+    image: "/artworks/art-18.jpg",
+    source: "iCanvas (David Drioton)",
+  },
+];

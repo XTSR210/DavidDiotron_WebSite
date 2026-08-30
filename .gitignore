@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+
+# Données privées : commandes clients + secrets (ne jamais publier)
+data/orders.json
+.env.local
+.env*.local
+
+# Outils Freebuff (état local, logs, run-doc)
+.freebuff/
+tsconfig.tsbuildinfo

@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+/*
+ * David Drioton — atelier theme.
+ * Deep studio charcoal canvas with pop-art magenta/amber accents, matching
+ * the torn-poster palette of his work.
+ */
+:root {
+  --ink: #12100e;
+  --ink-soft: #1c1815;
+  --paper: #f5efe6;
+  --magenta: #e0218a;
+  --amber: #f5a623;
+  --teal: #2ec4b6;
+}
+
+html,
+body {
+  background: var(--ink);
+  color: var(--paper);
+  overflow-x: clip;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Shared page backdrop: subtle torn-poster texture via layered gradients */
+.atelier-bg {
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(224, 33, 138, 0.16), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(245, 166, 35, 0.12), transparent 60%),
+    var(--ink);
+}
+
+.accent-text {
+  color: var(--magenta);
+}
+
+.accent-amber {
+  color: var(--amber);
+}
+
+.btn-accent {
+  background: var(--magenta);
+  color: #fff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.btn-accent:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 8px 30px rgba(224, 33, 138, 0.45);
+  transform: translateY(-1px);
+}
+
+.card-glass {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(8px);
+}
+
+/* ---------- Floating artwork animations ---------- */
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* The bob animation runs on the same element as the mount pop-in: both are
+   declared together so the pop-in (opacity + settle) plays first, then the
+   gentle up/down bob. The tilt is a separate `rotate` property, so it is
+   unaffected by these transform animations. */
+.float-art {
+  animation:
+    pop-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both,
+    floaty var(--dur, 6s) ease-in-out infinite;
+  will-change: transform;
+}
+
+.drift-art {
+  animation:
+    pop-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both,
+    drift var(--dur, 9s) ease-in-out infinite;
+  will-change: transform;
+}
+
+.float-shadow {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.pop-in {
+  animation: pop-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float-art,
+  .drift-art,
+  .pop-in,
+  .bg-zoom {
+    animation: none;
+  }
+}
+
+/* Slow zoom on the home page backdrop painting */
+@keyframes bg-zoom {
+  0%,
+  100% {
+    transform: scale(1.05);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+.bg-zoom {
+  animation: bg-zoom 45s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Marquee strip on the hero */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 28s linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
