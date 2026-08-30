@@ -2,7 +2,12 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { formatDimensions, formatEur, quoteCommission } from "@/lib/pricing";
+import {
+  MIN_CM,
+  formatDimensions,
+  formatEur,
+  quoteCommission,
+} from "@/lib/pricing";
 import type { Artwork } from "@/lib/types";
 import { CanvasCheckIcon } from "@/components/icons";
 import { site } from "@/lib/site";
@@ -148,31 +153,49 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
           </label>
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="mb-1 block text-xs text-white/50">Largeur (cm)</label>
+              <label className="mb-1 block text-xs text-white/50">
+                Largeur (cm) · min. {MIN_CM}
+              </label>
               <input
                 type="number"
-                min={10}
+                min={MIN_CM}
                 max={300}
+                step={1}
                 value={widthCm}
-                onChange={(e) => setWidthCm(Number(e.target.value))}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setWidthCm(Number.isFinite(v) ? Math.max(0, v) : 0);
+                }}
+                onBlur={() => setWidthCm((s) => Math.max(MIN_CM, Math.floor(s) || MIN_CM))}
                 className={inputCls}
               />
             </div>
             <span className="pt-4 text-white/40">×</span>
             <div className="flex-1">
-              <label className="mb-1 block text-xs text-white/50">Hauteur (cm)</label>
+              <label className="mb-1 block text-xs text-white/50">
+                Hauteur (cm) · min. {MIN_CM}
+              </label>
               <input
                 type="number"
-                min={10}
+                min={MIN_CM}
                 max={300}
+                step={1}
                 value={heightCm}
-                onChange={(e) => setHeightCm(Number(e.target.value))}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setHeightCm(Number.isFinite(v) ? Math.max(0, v) : 0);
+                }}
+                onBlur={() => setHeightCm((s) => Math.max(MIN_CM, Math.floor(s) || MIN_CM))}
                 className={inputCls}
               />
             </div>
           </div>
           <p className="mt-2 text-xs text-white/50">
-            Surface :{" "}
+            Minimum réalisable :{" "}
+            <span className="font-semibold text-white/85">
+              {MIN_CM} × {MIN_CM} cm
+            </span>{" "}
+            — une toile plus petite n'existe pas à l'atelier. Surface :{" "}
             <span className="text-white/85">{quote.areaCm2.toLocaleString("fr-FR")} cm²</span> —
             tarif atelier 0,18 €/cm² (peint à la main à Barjols).
           </p>

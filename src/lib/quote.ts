@@ -1,6 +1,9 @@
 /** Base studio rate per square centimetre, in euros. */
 export const RATE_EUR_PER_CM2 = 0.18;
 
+/** Minimum side length (cm) — a smaller canvas is not paintable. */
+export const MIN_CM = 20;
+
 /** A priced commission request. */
 export interface CommissionQuote {
   widthCm: number;
@@ -11,8 +14,8 @@ export interface CommissionQuote {
 
 /** Price a commission from its painted area in cm². */
 export function quoteCommission(widthCm: number, heightCm: number): CommissionQuote {
-  const width = Math.max(1, Math.floor(widthCm));
-  const height = Math.max(1, Math.floor(heightCm));
+  const width = Math.max(MIN_CM, Math.floor(widthCm));
+  const height = Math.max(MIN_CM, Math.floor(heightCm));
   const areaCm2 = width * height;
   const priceEur = Math.round(areaCm2 * RATE_EUR_PER_CM2 * 100) / 100;
   return { widthCm: width, heightCm: height, areaCm2, priceEur };

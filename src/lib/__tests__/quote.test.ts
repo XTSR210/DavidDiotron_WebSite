@@ -14,11 +14,11 @@ describe("quoteCommission", () => {
     expect(q.priceEur).toBe(Math.round(1517 * 0.18 * 100) / 100);
   });
 
-  it("clamps to minimum 1 cm", () => {
-    const q = quoteCommission(0, -5);
-    expect(q.widthCm).toBe(1);
-    expect(q.heightCm).toBe(1);
-    expect(q.areaCm2).toBe(1);
+  it("clamps to the minimum paintable size (20 cm)", () => {
+    const q = quoteCommission(1, 5);
+    expect(q.widthCm).toBe(20);
+    expect(q.heightCm).toBe(20);
+    expect(q.areaCm2).toBe(400);
   });
 });
 
