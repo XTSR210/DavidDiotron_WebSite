@@ -29,9 +29,10 @@ export default function CgvPage() {
 
       <LegalH2>Tarification</LegalH2>
       <p>
-        Le prix d'une pièce sur mesure est calculé selon la surface en
-        centimètres carrés (cm²) multipliée par le tarif au cm² en vigueur,
-        indiqué sur la page Commande. Le prix affiché s'entend toutes taxes
+        Le prix d'une pièce sur mesure est établi selon la cote i-CAC
+        (Indice de Cotation des Artistes Certifiés) de l'artiste, en fonction
+        de la surface en centimètres carrés (cm²) et des formats standards de
+        la grille de cotation. Le prix affiché s'entend toutes taxes
         comprises, hors frais de livraison éventuels.
       </p>
 

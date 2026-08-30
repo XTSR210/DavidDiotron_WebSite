@@ -196,8 +196,12 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
               {MIN_CM} × {MIN_CM} cm
             </span>{" "}
             — une toile plus petite n'existe pas à l'atelier. Surface :{" "}
-            <span className="text-white/85">{quote.areaCm2.toLocaleString("fr-FR")} cm²</span> —
-            tarif atelier 0,18 €/cm² (peint à la main à Barjols).
+            <span className="text-white/85">{quote.areaCm2.toLocaleString("fr-FR")} cm²</span>.
+          </p>
+          <p className="mt-1.5 text-xs text-white/50">
+            Tarif établi selon la cote i-CAC de l'artiste — repère :{" "}
+            <span className="text-white/85">{quote.refLabel}</span> ≈{" "}
+            <span className="font-semibold text-white/85">{formatEur(quote.refPriceEur)}</span>
           </p>
         </div>
 
