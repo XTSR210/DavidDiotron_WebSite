@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { FloatingArtwork } from "@/components/FloatingArtwork";
+import { assetPath } from "@/lib/site";
 import { readArtworks } from "@/lib/artworks";
-
-export const dynamic = "force-dynamic";
 
 const marqueeItems = [
   "Pop art",
@@ -18,7 +17,7 @@ export default async function HomePage() {
 
   // One of David's own paintings as the page backdrop, darkened so the text
   // stays readable. Picked outside the hero collage (art-01…art-05).
-  const backgroundArt = "/artworks/art-07.jpg";
+  const backgroundArt = assetPath("/artworks/art-07.jpg");
 
   // Deterministic floating-mosaic config: each painting gets its own tilt,
   // float/drift flavor and duration. Every painting is tilted differently.

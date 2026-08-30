@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { formatDimensions, formatEur, quoteCommission } from "@/lib/pricing";
 import type { Artwork } from "@/lib/types";
 import { CanvasCheckIcon } from "@/components/icons";
+import { site } from "@/lib/site";
 
 function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
   const params = useSearchParams();
@@ -23,48 +24,73 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
   const quote = useMemo(() => quoteCommission(widthCm, heightCm), [widthCm, heightCm]);
   const reference = artworks.find((a) => a.id === referenceId);
 
-  async function submit(e: React.FormEvent) {
+  function submit(e: React.FormEvent) {
     e.preventDefault();
-    setStatus("sending");
     setError("");
-    try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          referenceId: referenceId || undefined,
-          title,
-          widthCm: quote.widthCm,
-          heightCm: quote.heightCm,
-          name,
-          email,
-          message: message || undefined,
-        }),
-      });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body.error ?? "La commande a échoué.");
-      }
-      setStatus("done");
-    } catch (err) {
-      setStatus("error");
-      setError(err instanceof Error ? err.message : "Erreur inconnue.");
-    }
+
+    // Site 100 % statique (GitHub Pages) : la commande est envoyée par
+    // email à l'atelier, avec tout le récapitulatif pré-rempli.
+    const subject = `Commande sur mesure — ${reference?.title ?? (title || "Création libre")}`;
+    const body = [
+      "Bonjour David,",
+      "",
+      "Je souhaite commander une pièce sur mesure :",
+      `- Référence : ${reference?.title ?? "Création libre"}`,
+      `- Idée / sujet : ${title}`,
+      `- Dimensions : ${formatDimensions(quote.widthCm, quote.heightCm)} (${quote.areaCm2.toLocaleString("fr-FR")} cm²)`,
+      `- Prix estimé : ${formatEur(quote.priceEur)}`,
+      "",
+      `Nom : ${name}`,
+      `Email : ${email}`,
+      ...(message ? [`Message : ${message}`] : []),
+    ].join("\n");
+
+    const mailto = `mailto:${site.email}?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailto;
+    setStatus("done");
   }
 
   if (status === "done") {
     return (
       <div className="card-glass rounded-2xl p-8 text-center">
         <CanvasCheckIcon className="mx-auto h-14 w-14 text-[var(--teal)]" />
-        <h2 className="mt-3 text-2xl font-bold">Commande enregistrée</h2>
+        <h2 className="mt-3 text-2xl font-bold">Commande prête à envoyer !</h2>
         <p className="mt-2 text-white/70">
           {formatDimensions(quote.widthCm, quote.heightCm)} ·{" "}
           <span className="accent-amber font-semibold">{formatEur(quote.priceEur)}</span>
         </p>
         <p className="mt-3 text-sm text-white/60">
-          Paiement simulé (localhost). L'atelier vous contactera à{" "}
-          <span className="text-white/85">{email}</span> pour confirmer.
+          Votre messagerie s'est ouverte avec le récapitulatif pré-rempli.
+          Envoyez-le à l'atelier — David vous répondra pour confirmer la pièce
+          et le paiement. Sinon, contactez-le directement sur{" "}
+          <a
+            href={site.social[0].href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-[var(--amber)] hover:underline"
+          >
+            Instagram
+          </a>
+          .
         </p>
+        <div className="mt-5 flex flex-wrap justify-center gap-3">
+          <a
+            href={`mailto:${site.email}`}
+            className="btn-accent rounded-lg px-5 py-2.5 font-semibold"
+          >
+            Écrire à l'atelier
+          </a>
+          <a
+            href={site.social[0].href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg border border-white/20 px-5 py-2.5 font-semibold text-white/85 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
+          >
+            Instagram
+          </a>
+        </div>
       </div>
     );
   }
@@ -188,7 +214,7 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
       </div>
 
       <aside className="card-glass h-fit rounded-2xl p-6 lg:sticky lg:top-20">
-        <h2 className="text-lg font-bold">Paiement</h2>
+        <h2 className="text-lg font-bold">Récapitulatif</h2>
         <dl className="mt-4 space-y-2 text-sm">
           <div className="flex justify-between">
             <dt className="text-white/60">Surface</dt>
@@ -204,16 +230,13 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
           </div>
         </dl>
         <p className="mt-3 text-xs text-white/40">
-          Paiement simulé sur localhost — aucune carte n'est débitée. Le vrai
-          encaissement se branchera plus tard (Stripe ou virement).
+          Envoyez le récapitulatif par email : David vous confirmera la pièce,
+          le délai et le moyen de paiement (virement, chèque ou retrait à
+          l'atelier de Barjols).
         </p>
         {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
-        <button
-          type="submit"
-          disabled={status === "sending"}
-          className="btn-accent mt-5 w-full rounded-lg py-3 font-bold disabled:opacity-60"
-        >
-          {status === "sending" ? "Envoi…" : `Payer ${formatEur(quote.priceEur)}`}
+        <button type="submit" className="btn-accent mt-5 w-full rounded-lg py-3 font-bold">
+          Valider ma commande
         </button>
       </aside>
     </form>

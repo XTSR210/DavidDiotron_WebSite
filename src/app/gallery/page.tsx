@@ -1,6 +1,5 @@
 import { readArtworks } from "@/lib/artworks";
 
-export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Galerie — David Drioton",

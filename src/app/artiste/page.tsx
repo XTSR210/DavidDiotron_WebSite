@@ -2,9 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { FloatingArtwork } from "@/components/FloatingArtwork";
 import { BrushIcon, HandIcon, PaletteIcon, ScissorsIcon } from "@/components/icons";
+import { assetPath } from "@/lib/site";
 import { readArtworks } from "@/lib/artworks";
 
-export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "L'Artiste — David Drioton",
@@ -134,7 +134,7 @@ export default async function ArtistPage() {
             />
             <div className="relative overflow-hidden rounded-2xl border border-white/15 shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
               <Image
-                src="/artist/david-drioton.jpg"
+                src={assetPath("/artist/david-drioton.jpg")}
                 alt="David Drioton, artiste peintre, dans son atelier"
                 width={700}
                 height={700}

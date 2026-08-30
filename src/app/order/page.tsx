@@ -1,7 +1,6 @@
 import { OrderForm } from "@/components/OrderForm";
 import { readArtworks } from "@/lib/artworks";
 
-export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Commander — David Drioton",

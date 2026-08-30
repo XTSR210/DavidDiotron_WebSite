@@ -1,12 +1,14 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { Artwork } from "./types";
+import { assetPath } from "./site";
 import { seedArtworks } from "./seed-artworks";
 
 /**
  * Single source of truth for the gallery: `data/artworks.json` in the project
- * root. The admin API rewrites this file when David adds works; reads fall
- * back to the bundled seed list when the file does not exist yet.
+ * root. Sur GitHub Pages (build statique), les chemins d'images sont préfixés
+ * avec le basePath pour pointer au bon endroit ; en local, ils restent tels
+ * quels.
  */
 const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "artworks.json");
@@ -15,11 +17,10 @@ export async function readArtworks(): Promise<Artwork[]> {
   try {
     const raw = await fs.readFile(DATA_FILE, "utf8");
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0
-      ? (parsed as Artwork[])
-      : seedArtworks;
+    const list = Array.isArray(parsed) && parsed.length > 0 ? parsed : seedArtworks;
+    return (list as Artwork[]).map((a) => ({ ...a, image: assetPath(a.image) }));
   } catch {
-    return seedArtworks;
+    return seedArtworks.map((a) => ({ ...a, image: assetPath(a.image) }));
   }
 }
 
