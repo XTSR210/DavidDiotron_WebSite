@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { NavLinks } from "@/components/NavLinks";
 import {
+  BrushIcon,
   InstagramIcon,
   MailIcon,
   MapPinIcon,
@@ -36,7 +37,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   Artiste peintre · Provence
                 </span>
               </Link>
-              <NavLinks />
+              <div className="flex items-center gap-1 sm:gap-2">
+                <NavLinks />
+                {/* Accès atelier — entrée discrète de l'artiste */}
+                <Link
+                  href="/admin"
+                  title="Atelier (privé)"
+                  aria-label="Atelier (privé)"
+                  className="ml-0.5 rounded-lg px-1.5 py-1.5 text-xs text-white/30 transition hover:bg-white/10 hover:text-[var(--amber)] sm:ml-1 sm:px-2 sm:py-1.5"
+                >
+                  <BrushIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Link>
+              </div>
             </div>
           </header>
           <main className="flex-1">{children}</main>
