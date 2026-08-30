@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FloatingArtwork } from "@/components/FloatingArtwork";
+import { PriceCalculator } from "@/components/PriceCalculator";
 import { assetPath } from "@/lib/site";
 import { readArtworks } from "@/lib/artworks";
 
@@ -144,6 +145,9 @@ export default async function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* Live price calculator — bottom of the page, priced per the i-CAC grid */}
+      <PriceCalculator />
     </div>
   );
 }
