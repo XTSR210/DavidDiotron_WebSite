@@ -13,6 +13,21 @@ const TOKEN_KEY = "drioton-github-token";
 
 const ARTWORKS_PATH = "data/artworks.json";
 
+/** Chemin du site déployé sur GitHub Pages (sous-dossier) ou raciné en local. */
+const DEPLOY_BASE = "/DavidDiotron_WebSite";
+
+/** Préfixe les chemins d'images du dépôt quand on est déployé sous un sous-dossier. */
+function publicImage(p: string): string {
+  if (
+    typeof window !== "undefined" &&
+    window.location.pathname.startsWith(DEPLOY_BASE + "/") &&
+    p.startsWith("/")
+  ) {
+    return DEPLOY_BASE + p;
+  }
+  return p;
+}
+
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [pw, setPw] = useState("");
@@ -272,7 +287,11 @@ export default function AdminPage() {
               {artworks.map((a) => (
                 <div key={a.id} className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={a.image} alt={a.title} className="h-14 w-10 shrink-0 rounded object-cover" />
+                  <img
+                    src={publicImage(a.image)}
+                    alt={a.title}
+                    className="h-14 w-10 shrink-0 rounded object-cover bg-white/10"
+                  />
                   <span className="min-w-0 flex-1 truncate text-sm text-white">{a.title}</span>
                 </div>
               ))}
