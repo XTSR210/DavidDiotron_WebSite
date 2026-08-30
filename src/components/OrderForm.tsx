@@ -53,7 +53,15 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
     const mailto = `mailto:${site.email}?subject=${encodeURIComponent(
       subject
     )}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailto;
+
+    // Ouvre le client mail dans une fenêtre séparée, SANS quitter ni
+    // rediriger la page de commande actuelle.
+    const link = document.createElement("a");
+    link.href = mailto;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
     setStatus("done");
   }
 
