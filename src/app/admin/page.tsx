@@ -19,6 +19,7 @@ export default function AdminPage() {
   const [pwError, setPwError] = useState("");
 
   const [token, setToken] = useState("");
+  const [hasSavedToken, setHasSavedToken] = useState(false);
   const [connected, setConnected] = useState(false);
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [jsonSha, setJsonSha] = useState<string | null>(null);
@@ -36,17 +37,16 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (sessionStorage.getItem(PASSWORD_KEY) === "1") setAuthed(true);
+    const saved = localStorage.getItem(TOKEN_KEY);
+    if (saved) {
+      setToken(saved);
+      setHasSavedToken(true);
+    }
   }, []);
 
   useEffect(() => {
-    if (authed && !token) {
-      const saved = localStorage.getItem(TOKEN_KEY);
-      if (saved) setToken(saved);
-    }
-  }, [authed, token]);
-
-  useEffect(() => {
-    // Connecte automatiquement si un jeton est déjà enregistré.
+    // Connecte automatiquement si un jeton est déjà enregistré — le champ
+    // jeton ne réapparaît jamais ensuite.
     if (authed && token && !connected) {
       void connect();
     }
@@ -68,6 +68,8 @@ export default function AdminPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Connexion impossible.");
       setNeedsToken(true);
+      // Le jeton enregistré ne fonctionne plus : on réaffiche le champ jeton.
+      setHasSavedToken(false);
     } finally {
       setBusy(false);
     }
@@ -177,8 +179,14 @@ export default function AdminPage() {
         {artworks.length} œuvre(s) en ligne. Les ajouts se mettent en ligne tout seuls.
       </p>
 
+      {/* Suite à une connexion réussie, le jeton est masqué : on ne montre
+          l'écran « jeton » qu'à la toute première fois. */}
+      {!connected && hasSavedToken && (
+        <p className="mt-6 text-sm text-white/50">Connexion au dépôt…</p>
+      )}
+
       {/* Première connexion : jeton GitHub (une seule fois) */}
-      {!connected && (
+      {!connected && !hasSavedToken && (
         <div className="card-glass mt-6 rounded-2xl p-6">
           <h2 className="text-base font-bold">Connexion à GitHub (une fois)</h2>
           <p className="mt-1 text-xs text-white/50">
