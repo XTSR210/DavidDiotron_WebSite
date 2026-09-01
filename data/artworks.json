@@ -128,5 +128,10 @@
     "technique": "Technique mixte, collages d'affiches",
     "image": "/artworks/art-18.jpg",
     "source": "iCanvas (David Drioton)"
+  },
+  {
+    "id": "art-mtiq2mko",
+    "title": "test",
+    "image": "/artworks/art-mtiq2mko.png"
   }
 ]
