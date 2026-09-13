@@ -20,7 +20,11 @@ export const metadata: Metadata = {
   },
   description:
     "Atelier de David Drioton, artiste peintre pop art et contemporain à Barjols (Var, PACA). Découvrez ses œuvres et commandez une pièce sur mesure.",
-  icons: { icon: "/icon.svg" },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
     locale: "fr_FR",
@@ -30,10 +34,10 @@ export const metadata: Metadata = {
       "Pop art peint à la main à Barjols (Var). Œuvres uniques, collages d'affiches, commandes sur mesure au centimètre près.",
     images: [
       {
-        url: "/artworks/art-01.jpg",
+        url: "/og-image.jpg",
         width: 1200,
-        height: 1200,
-        alt: "Œuvre de David Drioton — Pink Paint Graffiti",
+        height: 630,
+        alt: "David Drioton — Artiste peintre pop art · Barjols, Provence",
       },
     ],
   },
@@ -42,7 +46,7 @@ export const metadata: Metadata = {
     title: "David Drioton — Artiste peintre pop art · Provence",
     description:
       "Pop art peint à la main à Barjols (Var). Œuvres uniques et commandes sur mesure.",
-    images: ["/artworks/art-01.jpg"],
+    images: ["/og-image.jpg"],
   },
 };
 

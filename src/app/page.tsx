@@ -2,7 +2,8 @@ import Link from "next/link";
 import { FloatingArtwork } from "@/components/FloatingArtwork";
 import { PriceCalculator } from "@/components/PriceCalculator";
 import { Reveal } from "@/components/Reveal";
-import { assetPath } from "@/lib/site";
+import { InstagramIcon } from "@/components/icons";
+import { assetPath, site } from "@/lib/site";
 import { readArtworks } from "@/lib/artworks";
 
 const marqueeItems = [
@@ -172,6 +173,45 @@ export default async function HomePage() {
                 <p className="mt-1 text-sm leading-snug text-white/60">{f.v}</p>
               </Reveal>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Instagram — la vie d'atelier en continu */}
+      <section className="border-y border-white/10 bg-white/[0.03]">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <Reveal>
+              <p className="eyebrow">Vie d'atelier</p>
+              <h2 className="display-2 mt-4">
+                Suivez l'atelier sur <span className="accent-text">Instagram</span>
+              </h2>
+              <p className="mt-4 max-w-xl leading-relaxed text-white/60">
+                Toiles en cours, couches de couleur, collages en train de se
+                faire — l'atelier de Barjols se raconte au fil des posts.
+              </p>
+            </Reveal>
+            <Reveal delay={0.12}>
+              <a
+                href={site.social[0].href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center gap-4 rounded-2xl border border-white/15 bg-white/[0.04] px-6 py-5 transition hover:border-[var(--magenta)]"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-[var(--magenta)] via-[#f0559a] to-[var(--amber)] text-white transition group-hover:scale-105">
+                  <InstagramIcon className="h-6 w-6" />
+                </span>
+                <span>
+                  <span className="block font-bold">{site.social[0].handle}</span>
+                  <span className="block text-sm text-white/55">
+                    Œuvres en cours, coulisses, nouveautés
+                  </span>
+                </span>
+                <span aria-hidden className="accent-amber ml-2 font-black transition group-hover:translate-x-1">
+                  →
+                </span>
+              </a>
+            </Reveal>
           </div>
         </div>
       </section>

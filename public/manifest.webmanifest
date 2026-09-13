@@ -1,0 +1,23 @@
+{
+  "name": "David Drioton — Artiste peintre · Provence",
+  "short_name": "D. Drioton",
+  "description": "Pop art peint à la main à Barjols (Var). Œuvres uniques et commandes sur mesure.",
+  "start_url": ".",
+  "display": "browser",
+  "background_color": "#12100e",
+  "theme_color": "#12100e",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

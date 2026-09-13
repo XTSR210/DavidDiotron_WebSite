@@ -415,6 +415,26 @@ body {
 }
 
 /* ==========================================================================
+   IMAGE FADE-IN — soft reveal when a lazy image finishes loading
+   ========================================================================== */
+
+.img-fade {
+  opacity: 0;
+  transition: opacity 0.6s var(--ease-out-quart);
+}
+
+.img-fade.img-loaded {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .img-fade {
+    opacity: 1;
+    transition: none;
+  }
+}
+
+/* ==========================================================================
    ACCESSIBILITY — visible keyboard focus everywhere (pop-art ring)
    ========================================================================== */
 

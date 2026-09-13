@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import type { Artwork } from "@/lib/types";
 import { useTilt } from "@/components/useTilt";
 import { useLightbox } from "@/components/GalleryLightbox";
@@ -13,6 +14,13 @@ import { useLightbox } from "@/components/GalleryLightbox";
 export function ArtCard({ artwork, index = 0 }: { artwork: Artwork; index?: number }) {
   const tilt = useTilt(6);
   const { open } = useLightbox();
+  const [loaded, setLoaded] = useState(false);
+
+  // Les images en cache déclenchent « load » avant l'hydratation : on
+  // vérifie aussi `complete` au moment où le ref s'attache.
+  const imgRef = useCallback((el: HTMLImageElement | null) => {
+    if (el && el.complete && el.naturalWidth > 0) setLoaded(true);
+  }, []);
 
   return (
     <article
@@ -33,10 +41,12 @@ export function ArtCard({ artwork, index = 0 }: { artwork: Artwork; index?: numb
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            ref={imgRef}
             src={artwork.image}
             alt={artwork.title}
             loading={index < 3 ? "eager" : "lazy"}
-            className="h-full w-full object-cover"
+            onLoad={() => setLoaded(true)}
+            className={`img-fade h-full w-full object-cover ${loaded ? "img-loaded" : ""}`}
           />
           <div className="art-sheen" aria-hidden />
           {/* Zoom hint */}
