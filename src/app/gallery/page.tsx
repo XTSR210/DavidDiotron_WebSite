@@ -1,9 +1,10 @@
 import { ArtCard } from "@/components/ArtCard";
+import { GalleryLightbox } from "@/components/GalleryLightbox";
 import { Reveal } from "@/components/Reveal";
 import { readArtworks } from "@/lib/artworks";
 
 export const metadata = {
-  title: "Galerie — David Drioton",
+  title: "Galerie",
   description: "Les œuvres de David Drioton, peintes à l'atelier de Barjols (Var).",
 };
 
@@ -24,24 +25,25 @@ export default async function GalleryPage() {
         <Reveal delay={0.16}>
           <p className="mt-5 leading-relaxed text-white/60">
             {artworks.length} œuvres peintes à la main à l'atelier de Barjols —
-            collages d'affiches, éclats de couleur, personnages. Chaque pièce est
-            unique : cliquez sur « Commander » pour l'acquérir ou lancer une
-            création sur mesure dans le même esprit.
+            collages d'affiches, éclats de couleur, personnages. Cliquez sur une
+            toile pour l'admirer en grand, ou sur « Commander » pour l'acquérir
+            et lancer une création sur mesure dans le même esprit.
           </p>
         </Reveal>
       </header>
 
-      {/* Staggered wall: every 3rd column dips so the wall breathes without
-          any overlap (pure margins — the layout stays robust). */}
-      <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {artworks.map((artwork, i) => (
-          <div key={artwork.id} className={i % 3 === 1 ? "lg:mt-10" : ""}>
-            <Reveal delay={Math.min((i % 3) * 0.07, 0.2)}>
-              <ArtCard artwork={artwork} index={i} />
-            </Reveal>
-          </div>
-        ))}
-      </div>
+      {/* Staggered wall + fullscreen lightbox */}
+      <GalleryLightbox artworks={artworks}>
+        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {artworks.map((artwork, i) => (
+            <div key={artwork.id} className={i % 3 === 1 ? "lg:mt-10" : ""}>
+              <Reveal delay={Math.min((i % 3) * 0.07, 0.2)}>
+                <ArtCard artwork={artwork} index={i} />
+              </Reveal>
+            </div>
+          ))}
+        </div>
+      </GalleryLightbox>
     </div>
   );
 }

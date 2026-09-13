@@ -29,27 +29,28 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
   const quote = useMemo(() => quoteCommission(widthCm, heightCm), [widthCm, heightCm]);
   const reference = artworks.find((a) => a.id === referenceId);
 
+  // Récapitulatif partagé entre l'email (mailto) et le bouton « Copier ».
+  const subject = `Commande sur mesure — ${reference?.title ?? (title || "Création libre")}`;
+  const body = [
+    "Bonjour David,",
+    "",
+    "Je souhaite commander une pièce sur mesure :",
+    `- Référence : ${reference?.title ?? "Création libre"}`,
+    `- Idée / sujet : ${title}`,
+    `- Dimensions : ${formatDimensions(quote.widthCm, quote.heightCm)} (${quote.areaCm2.toLocaleString("fr-FR")} cm²)`,
+    `- Prix estimé (approximatif, sous réserve de devis) : ${formatEur(quote.priceEur)}`,
+    "",
+    `Nom : ${name}`,
+    `Email : ${email}`,
+    ...(message ? [`Message : ${message}`] : []),
+  ].join("\n");
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
     // Site 100 % statique (GitHub Pages) : la commande est envoyée par
     // email à l'atelier, avec tout le récapitulatif pré-rempli.
-    const subject = `Commande sur mesure — ${reference?.title ?? (title || "Création libre")}`;
-    const body = [
-      "Bonjour David,",
-      "",
-      "Je souhaite commander une pièce sur mesure :",
-      `- Référence : ${reference?.title ?? "Création libre"}`,
-      `- Idée / sujet : ${title}`,
-      `- Dimensions : ${formatDimensions(quote.widthCm, quote.heightCm)} (${quote.areaCm2.toLocaleString("fr-FR")} cm²)`,
-      `- Prix estimé (approximatif, sous réserve de devis) : ${formatEur(quote.priceEur)}`,
-      "",
-      `Nom : ${name}`,
-      `Email : ${email}`,
-      ...(message ? [`Message : ${message}`] : []),
-    ].join("\n");
-
     const mailto = `mailto:${site.email}?subject=${encodeURIComponent(
       subject
     )}&body=${encodeURIComponent(body)}`;
@@ -63,6 +64,33 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
     link.click();
     link.remove();
     setStatus("done");
+  }
+
+  const [copied, setCopied] = useState(false);
+
+  async function copyOrder() {
+    const text = `${subject}\n\n${body}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+    } catch {
+      // Repli universel (navigateurs/contexts sans Clipboard API) :
+      // sélection via un textarea éphémère + execCommand.
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        setCopied(true);
+      } catch {
+        // Rien de fiable : l'utilisateur peut copier le texte manuellement.
+      }
+    }
+    setTimeout(() => setCopied(false), 2500);
   }
 
   if (status === "done") {
@@ -96,6 +124,13 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
           >
             Écrire à l'atelier
           </a>
+          <button
+            type="button"
+            onClick={copyOrder}
+            className="rounded-lg border border-white/20 px-5 py-2.5 font-semibold text-white/85 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
+          >
+            {copied ? "Copié ✓" : "Copier le récapitulatif"}
+          </button>
           <a
             href={site.social[0].href}
             target="_blank"
@@ -105,6 +140,11 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
             Instagram
           </a>
         </div>
+        {copied ? (
+          <p className="mt-3 text-xs text-emerald-400">
+            Récapitulatif copié ! Collez-le dans un email à {site.email} ou en message Instagram.
+          </p>
+        ) : null}
       </div>
     );
   }

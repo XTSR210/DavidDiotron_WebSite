@@ -8,6 +8,8 @@
 export const site = {
   name: "David Drioton",
   tagline: "Artiste peintre · Provence",
+  /** URL publique du site (utilisée pour le SEO / Open Graph). */
+  url: "https://xtsr210.github.io/DavidDiotron_WebSite",
   location: "Barjols, Var (PACA)",
   address: "Atelier de Barjols — 83670 Barjols, Var (PACA), France",
 

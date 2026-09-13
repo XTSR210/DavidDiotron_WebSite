@@ -2,14 +2,17 @@
 
 import type { Artwork } from "@/lib/types";
 import { useTilt } from "@/components/useTilt";
+import { useLightbox } from "@/components/GalleryLightbox";
 
 /**
  * Gallery artwork card with 3D pointer tilt, painterly sheen sweep and a
- * slow image zoom. Server pages stay static — the interaction is client-side
- * progressive enhancement only.
+ * slow image zoom. Clicking the image opens the fullscreen lightbox.
+ * Server pages stay static — the interaction is client-side progressive
+ * enhancement only.
  */
 export function ArtCard({ artwork, index = 0 }: { artwork: Artwork; index?: number }) {
   const tilt = useTilt(6);
+  const { open } = useLightbox();
 
   return (
     <article
@@ -22,7 +25,12 @@ export function ArtCard({ artwork, index = 0 }: { artwork: Artwork; index?: numb
         onMouseLeave={tilt.onMouseLeave}
         className="art-tilt card-glass group overflow-hidden rounded-2xl"
       >
-        <div className="relative aspect-[3/4] overflow-hidden">
+        <button
+          type="button"
+          onClick={() => open(index)}
+          aria-label={`Agrandir « ${artwork.title} »`}
+          className="relative block aspect-[3/4] w-full cursor-zoom-in overflow-hidden"
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={artwork.image}
@@ -31,7 +39,14 @@ export function ArtCard({ artwork, index = 0 }: { artwork: Artwork; index?: numb
             className="h-full w-full object-cover"
           />
           <div className="art-sheen" aria-hidden />
-        </div>
+          {/* Zoom hint */}
+          <span
+            aria-hidden
+            className="absolute bottom-2 right-2 rounded-md bg-black/50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/80 opacity-0 transition group-hover:opacity-100"
+          >
+            Agrandir ⤢
+          </span>
+        </button>
         <div className="p-4">
           <h2 className="font-bold">{artwork.title}</h2>
           <p className="mt-1 text-xs text-white/50">

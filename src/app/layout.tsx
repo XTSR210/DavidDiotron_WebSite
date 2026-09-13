@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { NavLinks } from "@/components/NavLinks";
+import { BackToTop } from "@/components/BackToTop";
 import {
   BrushIcon,
   InstagramIcon,
@@ -12,15 +13,72 @@ import { site } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "David Drioton — Artiste peintre · Provence (PACA)",
+  metadataBase: new URL(site.url),
+  title: {
+    default: "David Drioton — Artiste peintre · Provence (PACA)",
+    template: "%s — David Drioton",
+  },
   description:
     "Atelier de David Drioton, artiste peintre pop art et contemporain à Barjols (Var, PACA). Découvrez ses œuvres et commandez une pièce sur mesure.",
+  icons: { icon: "/icon.svg" },
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    siteName: "David Drioton — Artiste peintre",
+    title: "David Drioton — Artiste peintre pop art · Provence",
+    description:
+      "Pop art peint à la main à Barjols (Var). Œuvres uniques, collages d'affiches, commandes sur mesure au centimètre près.",
+    images: [
+      {
+        url: "/artworks/art-01.jpg",
+        width: 1200,
+        height: 1200,
+        alt: "Œuvre de David Drioton — Pink Paint Graffiti",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "David Drioton — Artiste peintre pop art · Provence",
+    description:
+      "Pop art peint à la main à Barjols (Var). Œuvres uniques et commandes sur mesure.",
+    images: ["/artworks/art-01.jpg"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
       <body>
+        {/* Skip-link accessibilité : sauter directement au contenu */}
+        <a
+          href="#contenu"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-lg focus:bg-[var(--magenta)] focus:px-4 focus:py-2 focus:font-semibold focus:text-white"
+        >
+          Aller au contenu
+        </a>
+        {/* Données structurées JSON-LD (SEO) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ArtGallery",
+              name: "Atelier David Drioton",
+              description:
+                "Artiste peintre pop art à Barjols (Var, PACA). Œuvres uniques peintes à la main, commandes sur mesure.",
+              url: site.url,
+              image: `${site.url}/artworks/art-01.jpg`,
+              address: {
+                "@type": "PostalAddress",
+                addressLocality: "Barjols",
+                addressRegion: "Var (PACA)",
+                addressCountry: "FR",
+              },
+              sameAs: site.social.map((s) => s.href),
+            }),
+          }}
+        />
         <div className="atelier-bg min-h-screen flex flex-col">
           <header className="sticky top-0 z-40 border-b border-white/10 bg-[var(--ink)]/85 backdrop-blur">
             {/* Pop-art stripe accent */}
@@ -51,7 +109,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </div>
           </header>
-          <main className="flex-1">{children}</main>
+          <main id="contenu" className="flex-1">{children}</main>
           <footer className="relative z-20 border-t border-white/10 bg-[var(--ink)]/90 backdrop-blur">
             <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
               {/* Brand */}
@@ -183,6 +241,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </div>
           </footer>
+          <BackToTop />
         </div>
       </body>
     </html>

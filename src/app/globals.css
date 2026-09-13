@@ -415,6 +415,20 @@ body {
 }
 
 /* ==========================================================================
+   ACCESSIBILITY — visible keyboard focus everywhere (pop-art ring)
+   ========================================================================== */
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.btn-accent:focus-visible {
+  outline-color: #fff;
+}
+
+/* ==========================================================================
    REDUCED MOTION — every animation off, content fully visible
    ========================================================================== */
 
