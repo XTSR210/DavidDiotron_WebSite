@@ -109,6 +109,32 @@ export default function AdminPage() {
     });
   }
 
+  async function remove(id: string) {
+    const target = artworks.find((a) => a.id === id);
+    if (!target || !window.confirm(`Supprimer « ${target.title} » ?`)) return;
+    setError("");
+    setStatus("");
+    setBusy(true);
+    try {
+      const next = artworks.filter((a) => a.id !== id);
+      const newSha = await putFile(
+        token.trim(),
+        DEFAULT_REPO,
+        ARTWORKS_PATH,
+        toBase64(`${JSON.stringify(next, null, 2)}\n`),
+        `Œuvre supprimée : ${target.title}`,
+        jsonSha ?? undefined
+      );
+      setJsonSha(newSha ?? jsonSha);
+      setArtworks(next);
+      setStatus(`« ${target.title} » supprimée — le site se met à jour automatiquement (≈ 2 min).`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Suppression impossible.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function add(e: React.FormEvent) {
     e.preventDefault();
     setError(""); setStatus(""); setBusy(true);
@@ -290,9 +316,31 @@ export default function AdminPage() {
                   <img
                     src={publicImage(a.image)}
                     alt={a.title}
+                    loading="lazy"
                     className="h-14 w-10 shrink-0 rounded object-cover bg-white/10"
+                    onError={(e) => {
+                      const img = e.currentTarget;
+                      // Si le chemin préfixé échoue, retente sans préfixe
+                      // (et inversement) une seule fois.
+                      const alt = img.src.includes(DEPLOY_BASE)
+                        ? img.src.replace(DEPLOY_BASE, "")
+                        : DEPLOY_BASE + img.getAttribute("src");
+                      if (!img.dataset.retried) {
+                        img.dataset.retried = "1";
+                        img.src = alt;
+                      }
+                    }}
                   />
                   <span className="min-w-0 flex-1 truncate text-sm text-white">{a.title}</span>
+                  <button
+                    type="button"
+                    onClick={() => remove(a.id)}
+                    disabled={busy}
+                    title="Supprimer cette œuvre"
+                    className="shrink-0 rounded-md border border-white/15 px-2 py-1 text-xs text-white/50 transition hover:border-red-400 hover:text-red-400 disabled:opacity-40"
+                  >
+                    Suppr.
+                  </button>
                 </div>
               ))}
             </div>

@@ -4,6 +4,16 @@
  * David Drioton — atelier theme.
  * Deep studio charcoal canvas with pop-art magenta/amber accents, matching
  * the torn-poster palette of his work.
+ *
+ * Motion system ("atelier cinema") :
+ *   - every animation runs on transform / opacity only → GPU-composited,
+ *     no layout thrash, 60 fps ;
+ *   - easings are spring-like (cubic-bezier overshoot) for a crafted feel ;
+ *   - a scroll-reveal engine (Reveal.tsx) fades + lifts sections in ;
+ *   - a page-transition curtain wipes the screen on navigation ;
+ *   - artworks float via composited transforms + static `rotate`, so tilt
+ *     and motion compose without fighting over the `transform` property ;
+ *   - everything respects prefers-reduced-motion.
  */
 :root {
   --ink: #12100e;
@@ -12,6 +22,11 @@
   --magenta: #e0218a;
   --amber: #f5a623;
   --teal: #2ec4b6;
+
+  /* Signature easings */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-quart: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-smooth: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 html,
@@ -44,13 +59,18 @@ body {
 .btn-accent {
   background: var(--magenta);
   color: #fff;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  transition: transform 0.2s var(--ease-spring), box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .btn-accent:hover {
   filter: brightness(1.08);
-  box-shadow: 0 8px 30px rgba(224, 33, 138, 0.45);
-  transform: translateY(-1px);
+  box-shadow: 0 10px 34px rgba(224, 33, 138, 0.5);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.btn-accent:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 0.08s;
 }
 
 .card-glass {
@@ -59,32 +79,152 @@ body {
   backdrop-filter: blur(8px);
 }
 
-/* ---------- Floating artwork animations ---------- */
+/* ==========================================================================
+   PAGE TRANSITIONS — curtain wipe on navigation
+   ========================================================================== */
+
+.page-exit {
+  /* Applied by TransitionCurtain when the router leaves a page. */
+  animation: page-exit 0.28s var(--ease-smooth) both;
+}
+
+@keyframes page-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.995);
+  }
+}
+
+.page-enter {
+  animation: page-enter 0.55s var(--ease-out-quart) both;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.998);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Full-screen curtain: three pop-art panels sliding across the viewport. */
+.transition-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  pointer-events: none;
+}
+
+.transition-curtain span {
+  flex: 1;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.transition-curtain.play span {
+  animation: curtain-panel 0.62s var(--ease-smooth) both;
+}
+
+.transition-curtain span:nth-child(1) {
+  background: var(--magenta);
+}
+.transition-curtain span:nth-child(2) {
+  background: var(--amber);
+  animation-delay: 0.06s !important;
+}
+.transition-curtain span:nth-child(3) {
+  background: var(--teal);
+  animation-delay: 0.12s !important;
+}
+
+@keyframes curtain-panel {
+  0% {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  42% {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  58% {
+    transform: scaleX(1);
+    transform-origin: right;
+  }
+  100% {
+    transform: scaleX(0);
+    transform-origin: right;
+  }
+}
+
+/* ==========================================================================
+   SCROLL REVEALS — fade + rise + stagger
+   ========================================================================== */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.75s var(--ease-out-quart),
+    transform 0.75s var(--ease-out-quart);
+  transition-delay: var(--reveal-delay, 0s);
+  will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Variant: reveal from the left / right (used by two-column sections) */
+.reveal-left {
+  transform: translateX(-36px);
+}
+.reveal-right {
+  transform: translateX(36px);
+}
+.reveal-left.reveal.is-visible,
+.reveal-right.reveal.is-visible {
+  transform: translateX(0);
+}
+
+/* ==========================================================================
+   FLOATING ARTWORKS — hero collage
+   ========================================================================== */
 
 @keyframes floaty {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
   50% {
-    transform: translateY(-12px);
+    transform: translate3d(0, -14px, 0);
   }
 }
 
+/* Drift = bob + subtle horizontal sway, phase-shifted by animation-delay */
 @keyframes drift {
-  0%,
-  100% {
-    transform: translateY(0);
+  0% {
+    transform: translate3d(0, 0, 0);
   }
-  50% {
-    transform: translateY(-7px);
+  28% {
+    transform: translate3d(6px, -9px, 0);
+  }
+  62% {
+    transform: translate3d(-5px, -13px, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes pop-in {
   0% {
     opacity: 0;
-    transform: scale(0.9) translateY(16px);
+    transform: scale(0.88) translateY(22px);
   }
   100% {
     opacity: 1;
@@ -94,18 +234,18 @@ body {
 
 /* The bob animation runs on the same element as the mount pop-in: both are
    declared together so the pop-in (opacity + settle) plays first, then the
-   gentle up/down bob. The tilt is a separate `rotate` property, so it is
-   unaffected by these transform animations. */
+   gentle bob. The tilt is a separate `rotate` property, so it is unaffected
+   by these transform animations. */
 .float-art {
   animation:
-    pop-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both,
+    pop-in 0.75s var(--ease-spring) both,
     floaty var(--dur, 6s) ease-in-out infinite;
   will-change: transform;
 }
 
 .drift-art {
   animation:
-    pop-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both,
+    pop-in 0.75s var(--ease-spring) both,
     drift var(--dur, 9s) ease-in-out infinite;
   will-change: transform;
 }
@@ -115,16 +255,73 @@ body {
 }
 
 .pop-in {
-  animation: pop-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: pop-in 0.7s var(--ease-spring) both;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .float-art,
-  .drift-art,
-  .pop-in,
-  .bg-zoom {
-    animation: none;
+/* ==========================================================================
+   ART CARD 3D HOVER — gallery & mosaics (progressive enhancement)
+   ========================================================================== */
+
+.art-tilt {
+  transform-style: preserve-3d;
+  transition: transform 0.45s var(--ease-out-quart), box-shadow 0.45s ease;
+  will-change: transform;
+}
+
+/* The parent card gets JS-driven rotateX/rotateY; the image zooms inside. */
+.art-tilt img {
+  transition: transform 0.7s var(--ease-out-quart), filter 0.5s ease;
+}
+
+.art-tilt:hover img,
+.art-tilt:focus-visible img {
+  transform: scale(1.06);
+  filter: brightness(1.06) saturate(1.08);
+}
+
+/* Painterly light sweep across the card on hover */
+.art-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.16) 46%,
+    rgba(255, 255, 255, 0.04) 54%,
+    transparent 70%
+  );
+  transform: translateX(-130%);
+  transition: transform 0.9s var(--ease-out-quart);
+}
+
+.art-tilt:hover .art-sheen {
+  transform: translateX(130%);
+}
+
+/* ==========================================================================
+   MARQUEE — hero ticker
+   ========================================================================== */
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
   }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
 }
 
 /* Slow zoom on the home page backdrop painting */
@@ -143,24 +340,66 @@ body {
   will-change: transform;
 }
 
-/* Marquee strip on the hero */
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
+/* ==========================================================================
+   NAV — animated underline
+   ========================================================================== */
+
+.nav-underline::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: -2px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--magenta), var(--amber));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.32s var(--ease-out-quart);
+}
+
+.nav-underline:hover::after {
+  transform: scaleX(0.55);
+}
+
+.nav-underline.nav-active::after {
+  transform: scaleX(1);
+}
+
+@media (max-width: 640px) {
+  .nav-underline::after {
+    left: 4px;
+    right: 4px;
   }
 }
 
-.marquee-track {
-  display: flex;
-  width: max-content;
-  animation: marquee 28s linear infinite;
-  will-change: transform;
-  transform: translateZ(0);
-}
+/* ==========================================================================
+   REDUCED MOTION — every animation off, content fully visible
+   ========================================================================== */
 
-.marquee-track:hover {
-  animation-play-state: paused;
+@media (prefers-reduced-motion: reduce) {
+  .float-art,
+  .drift-art,
+  .pop-in,
+  .bg-zoom,
+  .marquee-track,
+  .page-enter,
+  .page-exit,
+  .transition-curtain span {
+    animation: none !important;
+  }
+
+  .reveal,
+  .reveal-left,
+  .reveal-right {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .art-tilt,
+  .art-tilt img,
+  .art-sheen {
+    transition: none !important;
+  }
 }

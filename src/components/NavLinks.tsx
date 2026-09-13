@@ -23,21 +23,13 @@ export function NavLinks() {
             key={item.href}
             href={item.href}
             className={
-              "group relative rounded-lg px-1 py-1.5 text-xs font-semibold tracking-wide transition sm:px-4 sm:py-2 sm:text-lg " +
+              "nav-underline group relative rounded-lg px-1 py-1.5 text-xs font-semibold tracking-wide transition sm:px-4 sm:py-2 sm:text-lg " +
               (active
-                ? "text-white"
+                ? "nav-active text-white"
                 : "text-white/70 hover:bg-white/10 hover:text-white")
             }
           >
             {item.label}
-            <span
-              className={
-                "absolute inset-x-1 -bottom-0.5 h-0.5 rounded-full transition sm:inset-x-4 " +
-                (active
-                  ? "bg-gradient-to-r from-[var(--magenta)] to-[var(--amber)]"
-                  : "bg-transparent group-hover:bg-white/40")
-              }
-            />
           </Link>
         );
       })}

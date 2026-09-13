@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FloatingArtwork } from "@/components/FloatingArtwork";
+import { Reveal } from "@/components/Reveal";
 import { BrushIcon, HandIcon, PaletteIcon, ScissorsIcon } from "@/components/icons";
 import { assetPath } from "@/lib/site";
 import { readArtworks } from "@/lib/artworks";
@@ -66,19 +67,26 @@ export default async function ArtistPage() {
       <section className="relative overflow-hidden">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-16 pt-14 lg:grid-cols-2">
           <div>
+            <Reveal>
             <p className="mb-4 text-base uppercase tracking-[0.25em] accent-amber">
               L'artiste · Barjols, Var (PACA)
             </p>
+            </Reveal>
+            <Reveal delay={0.08}>
             <h1 className="text-5xl font-black leading-[1.05] sm:text-6xl">
               David Drioton, une <span className="accent-text">vision pop</span> née en
               Provence.
             </h1>
+            </Reveal>
+            <Reveal delay={0.16}>
             <p className="mt-5 max-w-xl text-lg text-white/70">
               Artiste peintre reconnu dans sa région, David puise dans la rue, la
               publicité et les affiches déchirées du métro pour composer des toiles
               uniques, pleines de couleurs et de personnages. Son atelier est à
               Barjols, dans le Var. Ses œuvres, elles, voyagent à travers le monde.
             </p>
+            </Reveal>
+            <Reveal delay={0.24}>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/gallery" className="btn-accent rounded-lg px-5 py-2.5 font-semibold">
                 Voir ses œuvres
@@ -90,6 +98,7 @@ export default async function ArtistPage() {
                 Commander une pièce
               </Link>
             </div>
+            </Reveal>
           </div>
 
           {/* Floating collage — his own works, scattered without overlap */}
@@ -127,7 +136,7 @@ export default async function ArtistPage() {
       {/* Portrait — the man behind the canvases */}
       <section className="border-y border-white/10 bg-white/[0.03]">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 lg:grid-cols-[380px_1fr]">
-          <div className="relative mx-auto w-64 sm:w-72">
+          <Reveal direction="left" className="relative mx-auto w-64 sm:w-72">
             <div
               className="absolute -inset-3 -rotate-2 rounded-2xl border-2 border-[var(--magenta)]/40"
               aria-hidden
@@ -145,8 +154,8 @@ export default async function ArtistPage() {
             <p className="mt-3 text-center text-xs uppercase tracking-[0.2em] text-white/50">
               David Drioton · l'atelier, Provence
             </p>
-          </div>
-          <div>
+          </Reveal>
+          <Reveal direction="right">
             <p className="mb-3 text-sm uppercase tracking-[0.25em] accent-amber">
               L'homme derrière la toile
             </p>
@@ -175,7 +184,7 @@ export default async function ArtistPage() {
                 collectionneur.
               </p>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -198,12 +207,12 @@ export default async function ArtistPage() {
           Son <span className="accent-text">univers</span>
         </h2>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {pillars.map((p) => (
-            <div key={p.title} className="card-glass rounded-2xl p-6">
+          {pillars.map((p, i) => (
+            <Reveal key={p.title} delay={i * 0.1} className="card-glass rounded-2xl p-6">
               <p.Icon className={`h-10 w-10 ${p.accent}`} />
               <h3 className="mt-3 text-lg font-bold">{p.title}</h3>
               <p className="mt-2 text-sm text-white/70">{p.text}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -215,12 +224,12 @@ export default async function ArtistPage() {
             Le <span className="accent-amber">parcours</span>
           </h2>
           <div className="mt-8 grid gap-6 sm:grid-cols-2">
-            {milestones.map((m) => (
-              <div key={m.title} className="card-glass rounded-2xl p-6">
+            {milestones.map((m, i) => (
+              <Reveal key={m.title} delay={i * 0.08} className="card-glass rounded-2xl p-6">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] accent-text">{m.year}</p>
                 <h3 className="mt-2 text-lg font-bold">{m.title}</h3>
                 <p className="mt-2 text-sm text-white/70">{m.text}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -243,22 +252,23 @@ export default async function ArtistPage() {
           </Link>
         </div>
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {featured.map((a) => (
-            <Link
-              key={a.id}
-              href={`/order?ref=${a.id}`}
-              className="group relative aspect-[3/4] overflow-hidden rounded-xl border border-white/10"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={a.image}
-                alt={a.title}
-                className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]"
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                <p className="text-sm font-semibold">{a.title}</p>
-              </div>
-            </Link>
+          {featured.map((a, i) => (
+            <Reveal key={a.id} delay={Math.min(i * 0.06, 0.4)}>
+              <Link
+                href={`/order?ref=${a.id}`}
+                className="group relative block aspect-[3/4] overflow-hidden rounded-xl border border-white/10"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={a.image}
+                  alt={a.title}
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]"
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                  <p className="text-sm font-semibold">{a.title}</p>
+                </div>
+              </Link>
+            </Reveal>
           ))}
         </div>
       </section>
