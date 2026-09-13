@@ -66,7 +66,7 @@ export function PriceCalculator() {
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center sm:text-left">
             <p className="text-xs uppercase tracking-widest text-white/50">Estimation</p>
             <p className="accent-amber mt-1 text-3xl font-black">
-              {formatEur(quote.priceEur)}
+              ≈ {formatEur(quote.priceEur)}
             </p>
             <p className="mt-1 text-xs text-white/50">
               {quote.areaCm2.toLocaleString("fr-FR")} cm² · format {quote.widthCm} ×{" "}
@@ -80,6 +80,13 @@ export function PriceCalculator() {
 
         <p className="mt-3 text-xs text-white/40">
           Minimum réalisable à l'atelier : {MIN_CM} × {MIN_CM} cm.
+        </p>
+
+        <p className="mt-2 max-w-2xl text-xs leading-relaxed text-white/50">
+          <span className="font-semibold text-white/70">Prix approximatif</span> —
+          cette estimation est donnée à titre indicatif d'après la grille i-CAC.
+          Le prix définitif est confirmé par l'atelier (devis ferme) selon la
+          technique, le support et les frais de livraison éventuels.
         </p>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">

@@ -43,7 +43,7 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
       `- Référence : ${reference?.title ?? "Création libre"}`,
       `- Idée / sujet : ${title}`,
       `- Dimensions : ${formatDimensions(quote.widthCm, quote.heightCm)} (${quote.areaCm2.toLocaleString("fr-FR")} cm²)`,
-      `- Prix estimé : ${formatEur(quote.priceEur)}`,
+      `- Prix estimé (approximatif, sous réserve de devis) : ${formatEur(quote.priceEur)}`,
       "",
       `Nom : ${name}`,
       `Email : ${email}`,
@@ -72,7 +72,8 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
         <h2 className="mt-3 text-2xl font-bold">Commande prête à envoyer !</h2>
         <p className="mt-2 text-white/70">
           {formatDimensions(quote.widthCm, quote.heightCm)} ·{" "}
-          <span className="accent-amber font-semibold">{formatEur(quote.priceEur)}</span>
+          <span className="accent-amber font-semibold">≈ {formatEur(quote.priceEur)}</span>{" "}
+          <span className="text-sm text-white/50">(estimation)</span>
         </p>
         <p className="mt-3 text-sm text-white/60">
           Votre messagerie s'est ouverte avec le récapitulatif pré-rempli.
@@ -211,6 +212,11 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
             <span className="text-white/85">{quote.refLabel}</span> ≈{" "}
             <span className="font-semibold text-white/85">{formatEur(quote.refPriceEur)}</span>
           </p>
+          <p className="mt-1.5 text-xs text-white/50">
+            <span className="font-semibold text-white/70">Prix approximatif</span> :
+            estimation indicative, confirmée par un devis ferme de l'atelier
+            (technique, support et livraison peuvent l'ajuster).
+          </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -259,15 +265,19 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
             <dt className="text-white/60">Dimensions</dt>
             <dd>{formatDimensions(quote.widthCm, quote.heightCm)}</dd>
           </div>
-          <div className="flex justify-between border-t border-white/10 pt-3 text-base font-bold">
-            <dt>Total</dt>
-            <dd className="accent-amber">{formatEur(quote.priceEur)}</dd>
+          <div className="flex items-baseline justify-between border-t border-white/10 pt-3 text-base font-bold">
+            <dt>Estimation*</dt>
+            <dd className="accent-amber">≈ {formatEur(quote.priceEur)}</dd>
           </div>
         </dl>
+        <p className="mt-2 text-xs leading-relaxed text-white/45">
+          *Prix approximatif, à titre indicatif — le devis ferme est confirmé
+          par l'atelier avant toute commande.
+        </p>
         <p className="mt-3 text-xs text-white/40">
           Envoyez le récapitulatif par email : David vous confirmera la pièce,
-          le délai et le moyen de paiement (virement, chèque ou retrait à
-          l'atelier de Barjols).
+          le devis, le délai et le moyen de paiement (virement, chèque ou
+          retrait à l'atelier de Barjols).
         </p>
         {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
         <button type="submit" className="btn-accent mt-5 w-full rounded-lg py-3 font-bold">
