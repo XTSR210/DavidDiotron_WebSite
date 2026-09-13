@@ -9,6 +9,7 @@ import {
   quoteCommission,
 } from "@/lib/pricing";
 import type { Artwork } from "@/lib/types";
+import { LeadTimeNote } from "@/components/commercial";
 import { CanvasCheckIcon } from "@/components/icons";
 import { site } from "@/lib/site";
 
@@ -319,6 +320,9 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
           le devis, le délai et le moyen de paiement (virement, chèque ou
           retrait à l'atelier de Barjols).
         </p>
+        <div className="mt-4">
+          <LeadTimeNote />
+        </div>
         {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
         <button type="submit" className="btn-accent mt-5 w-full rounded-lg py-3 font-bold">
           Valider ma commande

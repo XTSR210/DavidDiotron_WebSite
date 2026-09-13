@@ -435,6 +435,42 @@ body {
 }
 
 /* ==========================================================================
+   COMMERCIAL — CTA banner, mobile action bar
+   ========================================================================== */
+
+/* Pop-art conversion banner: bold accent border + soft animated sheen */
+.cta-banner {
+  border: 1px solid rgba(224, 33, 138, 0.35);
+  background:
+    radial-gradient(700px 300px at 15% 0%, rgba(224, 33, 138, 0.14), transparent 60%),
+    radial-gradient(700px 300px at 85% 100%, rgba(245, 166, 35, 0.12), transparent 60%),
+    rgba(255, 255, 255, 0.03);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+
+/* Fixed bottom action bar (mobile only) — always-visible conversion path */
+.mobile-cta-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 80;
+  transform: translateY(110%);
+  transition: transform 0.45s var(--ease-spring);
+  will-change: transform;
+}
+
+.mobile-cta-bar.mobile-cta-visible {
+  transform: translateY(0);
+}
+
+@media (min-width: 640px) {
+  .mobile-cta-bar {
+    display: none;
+  }
+}
+
+/* ==========================================================================
    ACCESSIBILITY — visible keyboard focus everywhere (pop-art ring)
    ========================================================================== */
 

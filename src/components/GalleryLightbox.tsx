@@ -143,11 +143,15 @@ export function GalleryLightbox({
             </p>
             <a
               href={`/order?ref=${artwork.id}`}
-              className="btn-accent mt-4 inline-block rounded-lg px-5 py-2 text-sm font-semibold"
+              className="btn-accent mt-4 inline-block rounded-lg px-5 py-2 text-sm font-bold"
             >
               Commander une pièce dans cet esprit
             </a>
-            <p className="mt-2 text-[11px] text-white/35">
+            <p className="mt-2 text-[11px] text-white/40">
+              Pièce unique peinte à la main · certificat d'authenticité · livraison
+              protégée — ou création sur mesure à vos dimensions.
+            </p>
+            <p className="mt-1.5 text-[11px] text-white/35">
               Échap pour fermer · ← → pour naviguer
             </p>
           </div>

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { NavLinks } from "@/components/NavLinks";
 import { BackToTop } from "@/components/BackToTop";
+import { MobileCtaBar } from "@/components/MobileCtaBar";
+import { ProjectStrip } from "@/components/commercial";
 import {
   BrushIcon,
   InstagramIcon,
@@ -101,6 +103,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
               <div className="flex items-center gap-1 sm:gap-2">
                 <NavLinks />
+                {/* CTA commercial permanent — visible même de loin */}
+                <Link
+                  href="/order"
+                  className="btn-accent ml-1 hidden rounded-lg px-4 py-2 text-sm font-bold md:inline-block"
+                >
+                  Commander
+                </Link>
                 {/* Accès atelier — entrée discrète de l'artiste */}
                 <Link
                   href="/admin"
@@ -115,7 +124,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </header>
           <main id="contenu" className="flex-1">{children}</main>
           <footer className="relative z-20 border-t border-white/10 bg-[var(--ink)]/90 backdrop-blur">
-            <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
+            <div className="mx-auto max-w-6xl px-4 pt-10">
+              <ProjectStrip compact />
+            </div>
+            <div className="mx-auto grid max-w-6xl gap-12 px-4 py-14 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
               {/* Brand */}
               <div>
                 <div
@@ -246,6 +258,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           </footer>
           <BackToTop />
+          <MobileCtaBar />
         </div>
       </body>
     </html>

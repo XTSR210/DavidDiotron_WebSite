@@ -3,6 +3,11 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { MIN_CM, formatEur, quoteCommission } from "@/lib/pricing";
+import {
+  AwardIcon,
+  ChatIcon,
+  ScrollIcon,
+} from "@/components/icons";
 
 /** Fiche officielle de cotation i-CAC de l'artiste. */
 const I_CAC_URL = "https://www.i-cac.fr/artiste/drioton-david/cotation.html";
@@ -30,7 +35,8 @@ export function PriceCalculator() {
         <p className="mt-4 max-w-2xl leading-relaxed text-white/60">
           Indiquez la taille de votre pièce : le prix est estimé en direct selon la
           cote officielle <span className="font-semibold text-white/80">i-CAC</span>{" "}
-          de l'artiste.
+          de l'artiste. <span className="text-white/80">Devis ferme et gratuit</span>{" "}
+          ensuite, sous 48 h — sans engagement.
         </p>
 
         <div className="mt-8 grid items-end gap-4 sm:grid-cols-[1fr_1fr_auto_1.2fr]">
@@ -94,7 +100,7 @@ export function PriceCalculator() {
             href={`/order?ref=&w=${quote.widthCm}&h=${quote.heightCm}`}
             className="btn-accent rounded-lg px-6 py-3 font-semibold"
           >
-            Commander cette pièce
+            Commander cette pièce — devis gratuit
           </Link>
           <a
             href={I_CAC_URL}
@@ -105,6 +111,20 @@ export function PriceCalculator() {
             Voir la fiche de cotation i-CAC ↗
           </a>
         </div>
+        <p className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs font-medium text-white/50">
+          <span className="flex items-center gap-1.5">
+            <AwardIcon className="h-4 w-4 text-[var(--amber)]" aria-hidden /> Grille
+            officielle i-CAC de l'artiste
+          </span>
+          <span className="flex items-center gap-1.5">
+            <ChatIcon className="h-4 w-4 text-[var(--teal)]" aria-hidden /> Réponse
+            personnalisée sous 48 h
+          </span>
+          <span className="flex items-center gap-1.5">
+            <ScrollIcon className="h-4 w-4 text-[var(--magenta)]" aria-hidden />{" "}
+            Certificat d'authenticité inclus
+          </span>
+        </p>
       </div>
     </div>
   );

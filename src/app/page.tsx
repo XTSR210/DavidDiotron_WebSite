@@ -2,7 +2,18 @@ import Link from "next/link";
 import { FloatingArtwork } from "@/components/FloatingArtwork";
 import { PriceCalculator } from "@/components/PriceCalculator";
 import { Reveal } from "@/components/Reveal";
-import { InstagramIcon } from "@/components/icons";
+import {
+  CtaBanner,
+  Faq,
+  Guarantees,
+  Testimonials,
+} from "@/components/commercial";
+import {
+  AwardIcon,
+  HandIcon,
+  InstagramIcon,
+  PackageIcon,
+} from "@/components/icons";
 import { assetPath, site } from "@/lib/site";
 import { readArtworks } from "@/lib/artworks";
 
@@ -79,16 +90,43 @@ export default async function HomePage() {
           </Reveal>
           <Reveal delay={0.24}>
             <div className="mt-9 flex flex-wrap gap-3">
-              <Link href="/gallery" className="btn-accent rounded-lg px-7 py-3.5 font-semibold">
-                Voir la galerie
-              </Link>
-              <Link
-                href="/order"
-                className="rounded-lg border border-white/20 px-7 py-3.5 font-semibold text-white/85 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
-              >
+              <Link href="/order" className="btn-accent rounded-lg px-7 py-3.5 font-semibold">
                 Commander une pièce
               </Link>
+              <Link
+                href="/gallery"
+                className="rounded-lg border border-white/20 px-7 py-3.5 font-semibold text-white/85 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
+              >
+                Voir la galerie
+              </Link>
+              <a
+                href={site.social[0].href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-lg px-3 py-3.5 text-sm font-semibold text-white/70 transition hover:text-[var(--magenta)]"
+              >
+                <InstagramIcon className="h-5 w-5" aria-hidden />
+                Être prévenu des nouveautés
+              </a>
             </div>
+          </Reveal>
+          <Reveal delay={0.32}>
+            <p className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs font-medium tracking-wide text-white/55">
+              <span className="flex items-center gap-1.5">
+                <AwardIcon className="h-4 w-4 text-[var(--amber)]" aria-hidden /> Coté
+                i-CAC · Prix Univers des Arts 2017
+              </span>
+              <span className="flex items-center gap-1.5">
+                <HandIcon className="h-4 w-4 text-[var(--teal)]" aria-hidden /> Pièces
+                uniques, peintes à la main
+              </span>
+              <span className="flex items-center gap-1.5">
+                <PackageIcon className="h-4 w-4 text-[var(--magenta)]" aria-hidden />{
+                  " "
+                }
+                Livraison soignée, France & international
+              </span>
+            </p>
           </Reveal>
 
           {/* Floating mosaic — his own paintings, each tilted differently,
@@ -189,6 +227,10 @@ export default async function HomePage() {
               <p className="mt-4 max-w-xl leading-relaxed text-white/60">
                 Toiles en cours, couches de couleur, collages en train de se
                 faire — l'atelier de Barjols se raconte au fil des posts.
+                <span className="mt-2 block font-medium text-white/80">
+                  Suivez l'atelier : nouveautés et pièces disponibles y sont
+                  montrées en premier, avant la galerie.
+                </span>
               </p>
             </Reveal>
             <Reveal delay={0.12}>
@@ -216,10 +258,22 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Live price calculator — bottom of the page, priced per the i-CAC grid */}
+      {/* Social proof — collector voices */}
+      <Testimonials />
+
+      {/* Live price calculator — priced per the i-CAC grid */}
       <Reveal>
         <PriceCalculator />
       </Reveal>
+
+      {/* Purchase guarantees — remove buying hesitations */}
+      <Guarantees />
+
+      {/* FAQ — answer objections before they become blockers */}
+      <Faq />
+
+      {/* Final conversion banner */}
+      <CtaBanner />
     </div>
   );
 }

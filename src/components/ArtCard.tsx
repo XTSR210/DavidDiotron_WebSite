@@ -49,6 +49,10 @@ export function ArtCard({ artwork, index = 0 }: { artwork: Artwork; index?: numb
             className={`img-fade h-full w-full object-cover ${loaded ? "img-loaded" : ""}`}
           />
           <div className="art-sheen" aria-hidden />
+          {/* Rarity badge — every piece is a one-off */}
+          <span className="absolute left-2 top-2 rounded-md bg-black/55 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--amber)] backdrop-blur">
+            Pièce unique
+          </span>
           {/* Zoom hint */}
           <span
             aria-hidden
@@ -70,7 +74,7 @@ export function ArtCard({ artwork, index = 0 }: { artwork: Artwork; index?: numb
               .join(" · ")}
           </p>
           {artwork.note ? <p className="mt-2 text-sm text-white/70">{artwork.note}</p> : null}
-          <div className="mt-3 flex items-center justify-between">
+          <div className="mt-3 flex items-center justify-between gap-2">
             {artwork.priceEur && !artwork.priceOnRequest ? (
               <span className="font-semibold accent-amber">
                 {artwork.priceEur.toLocaleString("fr-FR")} €
@@ -80,11 +84,15 @@ export function ArtCard({ artwork, index = 0 }: { artwork: Artwork; index?: numb
             )}
             <a
               href={`/order?ref=${artwork.id}`}
-              className="rounded-md border border-white/20 px-3 py-1.5 text-xs font-semibold transition hover:border-[var(--magenta)] hover:text-[var(--magenta)]"
+              className="btn-accent rounded-md px-3.5 py-1.5 text-xs font-bold"
             >
               Commander
             </a>
           </div>
+          <p className="mt-2 text-[11px] leading-snug text-white/40">
+            Une seule pièce existe — ou une création sur mesure dans le même
+            esprit, à la taille de votre choix.
+          </p>
         </div>
       </div>
     </article>

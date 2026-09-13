@@ -1,3 +1,5 @@
+import { ProjectStrip } from "@/components/commercial";
+
 export function LegalPage({
   title,
   updated,
@@ -18,6 +20,9 @@ export function LegalPage({
         <div className="space-y-3 text-sm leading-relaxed text-white/70">
           {children}
         </div>
+      </div>
+      <div className="mt-8">
+        <ProjectStrip compact />
       </div>
     </div>
   );

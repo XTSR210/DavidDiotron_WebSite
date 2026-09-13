@@ -1,4 +1,5 @@
 import { OrderForm } from "@/components/OrderForm";
+import { Guarantees, Testimonials } from "@/components/commercial";
 import { Reveal } from "@/components/Reveal";
 import { readArtworks } from "@/lib/artworks";
 
@@ -49,6 +50,8 @@ export default async function OrderPage() {
       <div className="mt-10">
         <OrderForm artworks={artworks} />
       </div>
+      <Testimonials />
+      <Guarantees />
     </div>
   );
 }

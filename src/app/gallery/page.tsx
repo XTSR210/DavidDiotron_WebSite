@@ -1,5 +1,6 @@
 import { ArtCard } from "@/components/ArtCard";
 import { GalleryLightbox } from "@/components/GalleryLightbox";
+import { CtaBanner, Guarantees } from "@/components/commercial";
 import { Reveal } from "@/components/Reveal";
 import { readArtworks } from "@/lib/artworks";
 
@@ -24,10 +25,12 @@ export default async function GalleryPage() {
         </Reveal>
         <Reveal delay={0.16}>
           <p className="mt-5 leading-relaxed text-white/60">
-            {artworks.length} œuvres peintes à la main à l'atelier de Barjols —
-            collages d'affiches, éclats de couleur, personnages. Cliquez sur une
-            toile pour l'admirer en grand, ou sur « Commander » pour l'acquérir
-            et lancer une création sur mesure dans le même esprit.
+            {artworks.length}            œuvres peintes à la main à l'atelier de Barjols —
+            collages d'affiches, éclats de couleur, personnages. Chaque pièce
+            est unique : quand elle trouve sa maison, elle ne revient pas.
+            Cliquez sur une toile pour l'admirer en grand, ou sur « Commander »
+            pour l'acquérir et lancer une création sur mesure dans le même
+            esprit.
           </p>
         </Reveal>
       </header>
@@ -44,6 +47,12 @@ export default async function GalleryPage() {
           ))}
         </div>
       </GalleryLightbox>
+
+      <Guarantees />
+      <CtaBanner
+        title="Une idée en tête ? David la peint pour vous."
+        text="Choisissez une référence dans la galerie ou partez d'une page blanche — l'estimation s'affiche en direct, le devis est gratuit."
+      />
     </div>
   );
 }

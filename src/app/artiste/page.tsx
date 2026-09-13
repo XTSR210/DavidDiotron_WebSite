@@ -1,8 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FloatingArtwork } from "@/components/FloatingArtwork";
+import { CtaBanner, Faq } from "@/components/commercial";
 import { Reveal } from "@/components/Reveal";
-import { BrushIcon, HandIcon, PaletteIcon, ScissorsIcon } from "@/components/icons";
+import {
+  AwardIcon,
+  BrushIcon,
+  HandIcon,
+  PaletteIcon,
+  ScissorsIcon,
+} from "@/components/icons";
 import { assetPath } from "@/lib/site";
 import { readArtworks } from "@/lib/artworks";
 
@@ -88,16 +95,22 @@ export default async function ArtistPage() {
             </Reveal>
             <Reveal delay={0.24}>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/gallery" className="btn-accent rounded-lg px-5 py-2.5 font-semibold">
-                Voir ses œuvres
-              </Link>
-              <Link
-                href="/order"
-                className="rounded-lg border border-white/20 px-5 py-2.5 font-semibold text-white/85 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
-              >
+              <Link href="/order" className="btn-accent rounded-lg px-5 py-2.5 font-semibold">
                 Commander une pièce
               </Link>
+              <Link
+                href="/gallery"
+                className="rounded-lg border border-white/20 px-5 py-2.5 font-semibold text-white/85 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
+              >
+                Voir ses œuvres
+              </Link>
             </div>
+            </Reveal>
+            <Reveal delay={0.32}>
+              <p className="mt-6 flex items-center gap-2 text-xs font-medium tracking-wide text-white/55">
+                <AwardIcon className="h-4 w-4 shrink-0 text-[var(--amber)]" aria-hidden />
+                Artiste coté i-CAC — estimation et devis au format exact de votre mur.
+              </p>
             </Reveal>
           </div>
 
@@ -280,32 +293,12 @@ export default async function ArtistPage() {
         </div>
       </section>
 
-      {/* CTA — commission */}
-      <section className="border-t border-white/10 bg-white/[0.03]">
-        <div className="mx-auto max-w-4xl px-4 py-20 text-center">
-          <h2 className="display-2">
-            Une pièce <span className="accent-text">sur mesure</span> ?
-          </h2>
-          <p className="mx-auto mt-5 max-w-2xl leading-relaxed text-white/70">
-            David peint aussi pour vous : choisissez un style, donnez la taille au
-            centimètre, et l'atelier s'occupe du reste. Peint à la main, signé,
-            livré de Barjols.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/order" className="btn-accent rounded-lg px-6 py-3 font-bold">
-              Commander une pièce
-            </Link>
-            <a
-              href="https://www.instagram.com/daviddrioton/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg border border-white/20 px-6 py-3 font-semibold text-white/85 transition hover:border-[var(--magenta)] hover:text-[var(--magenta)]"
-            >
-              Suivre sur Instagram
-            </a>
-          </div>
-        </div>
-      </section>
+      {/* CTA — commission + FAQ pour lever les derniers freins */}
+      <Faq />
+      <CtaBanner
+        title="Faites entrer l'atelier chez vous."
+        text="Décrivez le mur, l'ambiance, la taille — David propose une composition sur mesure et vous répond avec un devis ferme."
+      />
     </div>
   );
 }
