@@ -11,23 +11,35 @@ export default async function GalleryPage() {
   const artworks = await readArtworks();
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <Reveal>
-        <h1 className="text-3xl font-black">
-          La <span className="accent-text">galerie</span>
-        </h1>
-      </Reveal>
-      <Reveal delay={0.08}>
-        <p className="mt-2 text-white/60">
-          {artworks.length} œuvres peintes à la main à l'atelier de Barjols.
-        </p>
-      </Reveal>
+    <div className="mx-auto max-w-6xl px-4 py-14 sm:py-16">
+      <header className="max-w-2xl">
+        <Reveal>
+          <p className="eyebrow">Les œuvres</p>
+        </Reveal>
+        <Reveal delay={0.08}>
+          <h1 className="display-1 mt-4">
+            La <span className="accent-text">galerie</span>
+          </h1>
+        </Reveal>
+        <Reveal delay={0.16}>
+          <p className="mt-5 leading-relaxed text-white/60">
+            {artworks.length} œuvres peintes à la main à l'atelier de Barjols —
+            collages d'affiches, éclats de couleur, personnages. Chaque pièce est
+            unique : cliquez sur « Commander » pour l'acquérir ou lancer une
+            création sur mesure dans le même esprit.
+          </p>
+        </Reveal>
+      </header>
 
-      <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Staggered wall: every 3rd column dips so the wall breathes without
+          any overlap (pure margins — the layout stays robust). */}
+      <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {artworks.map((artwork, i) => (
-          <Reveal key={artwork.id} delay={Math.min(i * 0.05, 0.45)}>
-            <ArtCard artwork={artwork} index={i} />
-          </Reveal>
+          <div key={artwork.id} className={i % 3 === 1 ? "lg:mt-10" : ""}>
+            <Reveal delay={Math.min((i % 3) * 0.07, 0.2)}>
+              <ArtCard artwork={artwork} index={i} />
+            </Reveal>
+          </div>
         ))}
       </div>
     </div>

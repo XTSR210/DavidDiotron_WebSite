@@ -4,17 +4,49 @@ import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 
 type RevealTag = "div" | "section" | "article" | "figure" | "header" | "li" | "span";
 
+/* ------------------------------------------------------------------ */
+/* Shared reveal ticker — one rAF loop for every Reveal on the page.   */
+/* Event-free by design: programmatic jumps, anchors and flick scrolls */
+/* all behave the same, whatever the browser fires (or not).           */
+/* The loop runs only while elements remain hidden, then stops.        */
+/* ------------------------------------------------------------------ */
+
+type Pending = { el: HTMLElement; reveal: () => void };
+
+const pending = new Set<Pending>();
+let rafId: number | null = null;
+
+function checkAll() {
+  const vh = window.innerHeight;
+  for (const item of [...pending]) {
+    // Reveal as soon as the top edge is above the fold — covers content
+    // entering the viewport AND content already scrolled past.
+    if (item.el.getBoundingClientRect().top < vh - 24) {
+      pending.delete(item);
+      item.reveal();
+    }
+  }
+  rafId = pending.size > 0 ? requestAnimationFrame(checkAll) : null;
+}
+
+function subscribe(item: Pending) {
+  pending.add(item);
+  if (rafId === null) rafId = requestAnimationFrame(checkAll);
+}
+
+function unsubscribe(item: Pending) {
+  pending.delete(item);
+  if (pending.size === 0 && rafId !== null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+}
+
 /**
  * Scroll-reveal wrapper: its content starts slightly shifted + transparent,
  * then rises into place the first time it enters the viewport. `delay`
  * staggers siblings for a choreographed cascade. Respects
  * prefers-reduced-motion (handled in CSS).
- *
- * Two complementary triggers so nothing can stay hidden:
- *  1. IntersectionObserver — efficient, catches normal scrolling ;
- *  2. a passive scroll check — catches instant jumps (keyboard End, anchor
- *     links, fast flicks) where an element goes from below to above the
- *     viewport between two frames and never "intersects".
  */
 export function Reveal({
   children,
@@ -39,57 +71,13 @@ export function Reveal({
     const el = ref.current;
     if (!el) return;
 
-    // Progressive enhancement: without IntersectionObserver, show content.
-    if (typeof IntersectionObserver === "undefined") {
-      el.classList.add("is-visible");
-      return;
-    }
-
-    let revealed = false;
-
-    function reveal() {
-      if (revealed || !el) return;
-      revealed = true;
-      el.classList.add("is-visible");
-      io.disconnect();
-      window.removeEventListener("scroll", onScroll);
-    }
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting || entry.boundingClientRect.top < 0) {
-            reveal();
-            return;
-          }
-        }
-      },
-      { threshold: 0.08, rootMargin: "0px 0px -32px 0px" }
-    );
-
-    // Fallback for jump-scrolls: any element whose top edge sits above the
-    // viewport fold is revealed, even if IO never saw it intersect.
-    let ticking = false;
-    function onScroll() {
-      if (revealed || ticking || !el) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        ticking = false;
-        if (revealed || !el) return;
-        if (el.getBoundingClientRect().top < window.innerHeight) reveal();
-      });
-    }
-
-    io.observe(el);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    // Safety net (resize-triggered layout shifts, print, etc.)
-    window.addEventListener("resize", onScroll, { passive: true });
-
-    return () => {
-      io.disconnect();
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+    const item: Pending = {
+      el,
+      reveal: () => el.classList.add("is-visible"),
     };
+
+    subscribe(item);
+    return () => unsubscribe(item);
   }, []);
 
   const dirClass =

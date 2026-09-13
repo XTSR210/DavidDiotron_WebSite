@@ -21,18 +21,19 @@ export function PriceCalculator() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-14">
+    <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
       <div className="card-glass relative overflow-hidden rounded-3xl p-6 sm:p-10">
-        <h2 className="text-2xl font-black sm:text-3xl">
+        <p className="eyebrow">Estimation en direct</p>
+        <h2 className="display-2 mt-4">
           Combien coûte une toile <span className="accent-text">sur mesure</span> ?
         </h2>
-        <p className="mt-2 max-w-2xl text-sm text-white/60">
+        <p className="mt-4 max-w-2xl leading-relaxed text-white/60">
           Indiquez la taille de votre pièce : le prix est estimé en direct selon la
           cote officielle <span className="font-semibold text-white/80">i-CAC</span>{" "}
           de l'artiste.
         </p>
 
-        <div className="mt-7 grid items-end gap-4 sm:grid-cols-[1fr_1fr_auto_1.2fr]">
+        <div className="mt-8 grid items-end gap-4 sm:grid-cols-[1fr_1fr_auto_1.2fr]">
           <div>
             <label className="mb-1.5 block text-xs uppercase tracking-widest text-white/50">
               Largeur (cm)

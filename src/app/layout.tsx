@@ -53,30 +53,34 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </header>
           <main className="flex-1">{children}</main>
           <footer className="relative z-20 border-t border-white/10 bg-[var(--ink)]/90 backdrop-blur">
-            <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
               {/* Brand */}
               <div>
-                <p className="text-xl font-black uppercase tracking-tight">
+                <div
+                  aria-hidden
+                  className="mb-5 h-1 w-14 rounded-full bg-gradient-to-r from-[var(--magenta)] via-[var(--amber)] to-[var(--teal)]"
+                />
+                <p className="text-2xl font-black uppercase tracking-tight">
                   David <span className="accent-text">Drioton</span>
                 </p>
-                <p className="mt-1 text-xs uppercase tracking-[0.25em] text-white/50">
+                <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/50">
                   Artiste peintre · Provence
                 </p>
-                <p className="mt-4 flex items-start gap-2 text-sm text-white/60">
+                <p className="mt-5 flex items-start gap-2 text-sm leading-relaxed text-white/60">
                   <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-[var(--amber)]" />
                   <span>{site.address}</span>
                 </p>
-                <p className="mt-2 text-sm text-white/60">
+                <p className="mt-3 text-sm leading-relaxed text-white/60">
                   Portes ouvertes des artistes de Barjols — pièces uniques, peintes à la main.
                 </p>
               </div>
 
               {/* Contact */}
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.25em] text-white/40">
                   Contact
                 </h3>
-                <ul className="mt-4 space-y-3 text-sm">
+                <ul className="mt-5 space-y-3.5 text-sm">
                   <li>
                     <a
                       href={`tel:${site.phone.replace(/\./g, "")}`}
@@ -111,10 +115,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
               {/* Socials */}
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.25em] text-white/40">
                   Réseaux sociaux
                 </h3>
-                <div className="mt-4 flex gap-3">
+                <div className="mt-5 flex gap-3">
                   {site.social.map((s) => (
                     <a
                       key={s.name}
@@ -123,20 +127,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       rel="noopener noreferrer"
                       title={s.name}
                       aria-label={s.name}
-                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 text-white/70 transition hover:scale-105 hover:border-[var(--magenta)] hover:text-[var(--magenta)]"
+                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 text-white/70 transition hover:-translate-y-0.5 hover:border-[var(--magenta)] hover:text-[var(--magenta)]"
                     >
                       <InstagramIcon className="h-5 w-5" />
                     </a>
                   ))}
                 </div>
+                <p className="mt-3 text-xs text-white/45">
+                  {site.social[0].handle} — œuvres en cours, vie d'atelier.
+                </p>
               </div>
 
               {/* Navigation */}
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.25em] text-white/40">
                   Navigation
                 </h3>
-                <ul className="mt-4 space-y-2 text-sm">
+                <ul className="mt-5 space-y-2.5 text-sm">
                   {[
                     { href: "/", label: "Accueil" },
                     { href: "/artiste", label: "L'Artiste" },

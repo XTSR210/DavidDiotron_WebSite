@@ -8,11 +8,13 @@ export function LegalPage({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-14">
-      <h1 className="text-3xl font-black">{title}</h1>
-      <p className="mt-2 text-xs uppercase tracking-[0.2em] text-white/40">
+    <div className="mx-auto max-w-3xl px-4 py-16">
+      <p className="eyebrow">Informations légales</p>
+      <h1 className="display-2 mt-4">{title}</h1>
+      <p className="mt-3 text-xs uppercase tracking-[0.2em] text-white/40">
         Dernière mise à jour : {updated}
-      </p>        <div className="card-glass mt-8 rounded-2xl p-6 sm:p-8">
+      </p>
+      <div className="card-glass mt-9 rounded-2xl p-6 sm:p-9">
         <div className="space-y-3 text-sm leading-relaxed text-white/70">
           {children}
         </div>

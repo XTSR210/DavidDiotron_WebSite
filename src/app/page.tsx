@@ -60,32 +60,30 @@ export default async function HomePage() {
 
       {/* Hero: animated collage of the artist's own works */}
       <section className="relative overflow-hidden">
-        <div className="mx-auto max-w-6xl px-4 pb-20 pt-16">
+        <div className="mx-auto max-w-6xl px-4 pb-20 pt-16 sm:pt-20">
           <Reveal>
-            <p className="mb-4 text-base uppercase tracking-[0.25em] accent-amber">
-              Artiste peintre · Provence
-            </p>
+            <p className="eyebrow">Artiste peintre · Provence</p>
           </Reveal>
           <Reveal delay={0.08}>
-            <h1 className="max-w-2xl text-5xl font-black leading-[1.05] sm:text-6xl">
+            <h1 className="display-1 mt-5 max-w-2xl">
               David Drioton — <span className="accent-text">pop art</span> né dans
               l'atelier, à Barjols.
             </h1>
           </Reveal>
           <Reveal delay={0.16}>
-            <p className="mt-5 max-w-xl text-lg text-white/70">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/70">
               Couleurs qui jaillissent, affiches déchirées, personnages peints à
               la main. Chaque toile est unique, peinte à l'atelier dans le Var.
             </p>
           </Reveal>
           <Reveal delay={0.24}>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/gallery" className="btn-accent rounded-lg px-6 py-3 font-semibold">
+            <div className="mt-9 flex flex-wrap gap-3">
+              <Link href="/gallery" className="btn-accent rounded-lg px-7 py-3.5 font-semibold">
                 Voir la galerie
               </Link>
               <Link
                 href="/order"
-                className="rounded-lg border border-white/20 px-6 py-3 font-semibold text-white/85 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
+                className="rounded-lg border border-white/20 px-7 py-3.5 font-semibold text-white/85 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
               >
                 Commander une pièce
               </Link>
@@ -94,7 +92,7 @@ export default async function HomePage() {
 
           {/* Floating mosaic — his own paintings, each tilted differently,
               filling the width edge to edge (2 cols mobile / 3 cols desktop) */}
-          <div className="pointer-events-none relative mt-12 select-none">
+          <div className="pointer-events-none relative mt-16 select-none">
             <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 sm:gap-8">
               {artworks.map((artwork, i) => {
                 const cfg = hero[i % hero.length];
@@ -132,29 +130,50 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* About teaser */}
-      <section className="mx-auto max-w-6xl px-4 py-14">
-        <Reveal>
-          <div className="card-glass rounded-2xl p-6 sm:p-8">
-            <h2 className="text-2xl font-bold">
-              L'atelier, au cœur de la <span className="accent-amber">Provence</span>
-            </h2>
-            <p className="mt-3 max-w-3xl text-white/70">
-              Après sa rencontre avec la peintre Nadine Foster et la découverte de
-              Jackson Pollock, David Drioton développe un pop art de vitalité
-              flamboyante : personnages dessinés et peints à la main, fragments
-              d'affiches déchirées du métro parisien, super-héros et stars des
-              années 50 à aujourd'hui. Prix Univers des Arts 2017. Ses œuvres ont
-              voyagé de Paris à Miami, Lisbonne, Berlin, Hong Kong et Singapour.
-            </p>
-            <Link
-              href="/artiste"
-              className="mt-4 inline-block text-sm font-semibold accent-amber transition hover:brightness-110"
-            >
-              Découvrir l'artiste →
-            </Link>
+      {/* About teaser — two columns : text left, key figures right */}
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+        <div className="grid items-start gap-8 lg:grid-cols-[1.4fr_1fr]">
+          <Reveal>
+            <div className="card-glass h-full rounded-2xl p-6 sm:p-9">
+              <p className="eyebrow">L'atelier</p>
+              <h2 className="display-2 mt-4">
+                Au cœur de la <span className="accent-amber">Provence</span>
+              </h2>
+              <p className="mt-5 max-w-3xl leading-relaxed text-white/70">
+                Après sa rencontre avec la peintre Nadine Foster et la découverte de
+                Jackson Pollock, David Drioton développe un pop art de vitalité
+                flamboyante : personnages dessinés et peints à la main, fragments
+                d'affiches déchirées du métro parisien, super-héros et stars des
+                années 50 à aujourd'hui.
+              </p>
+              <p className="mt-4 max-w-3xl leading-relaxed text-white/70">
+                Chaque pièce naît à l'atelier de Barjols : une toile, un geste, une
+                signature — et un seul collectionneur.
+              </p>
+              <Link
+                href="/artiste"
+                className="mt-6 inline-block text-sm font-semibold accent-amber transition hover:brightness-110"
+              >
+                Découvrir l'artiste →
+              </Link>
+            </div>
+          </Reveal>
+
+          {/* Key figures — the artist's credibility at a glance */}
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">
+            {[
+              { k: "2017", v: "Prix Univers des Arts" },
+              { k: "3", v: "continents exposés — Paris, Miami, Singapour…" },
+              { k: "100 %", v: "peint à la main, pièces uniques" },
+              { k: "i-CAC", v: "cotation officielle de l'artiste" },
+            ].map((f, i) => (
+              <Reveal key={f.k} delay={0.1 + i * 0.08} className="card-glass rounded-2xl p-5">
+                <p className="accent-text text-3xl font-black tracking-tight">{f.k}</p>
+                <p className="mt-1 text-sm leading-snug text-white/60">{f.v}</p>
+              </Reveal>
+            ))}
           </div>
-        </Reveal>
+        </div>
       </section>
 
       {/* Live price calculator — bottom of the page, priced per the i-CAC grid */}

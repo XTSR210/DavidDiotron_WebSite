@@ -65,21 +65,21 @@ export default async function ArtistPage() {
     <div>
       {/* Hero — portrait of the artist through his own works */}
       <section className="relative overflow-hidden">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-16 pt-14 lg:grid-cols-2">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-20 pt-16 sm:pt-20 lg:grid-cols-2">
           <div>
             <Reveal>
-            <p className="mb-4 text-base uppercase tracking-[0.25em] accent-amber">
+            <p className="eyebrow">
               L'artiste · Barjols, Var (PACA)
             </p>
             </Reveal>
             <Reveal delay={0.08}>
-            <h1 className="text-5xl font-black leading-[1.05] sm:text-6xl">
+            <h1 className="display-1 mt-5">
               David Drioton, une <span className="accent-text">vision pop</span> née en
               Provence.
             </h1>
             </Reveal>
             <Reveal delay={0.16}>
-            <p className="mt-5 max-w-xl text-lg text-white/70">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/70">
               Artiste peintre reconnu dans sa région, David puise dans la rue, la
               publicité et les affiches déchirées du métro pour composer des toiles
               uniques, pleines de couleurs et de personnages. Son atelier est à
@@ -156,13 +156,13 @@ export default async function ArtistPage() {
             </p>
           </Reveal>
           <Reveal direction="right">
-            <p className="mb-3 text-sm uppercase tracking-[0.25em] accent-amber">
+            <p className="eyebrow">
               L'homme derrière la toile
             </p>
-            <h2 className="text-3xl font-black">
+            <h2 className="display-2 mt-4">
               Un peintre, un <span className="accent-text">geste</span>, une signature.
             </h2>
-            <div className="mt-4 space-y-3 text-white/70">
+            <div className="mt-5 space-y-3 leading-relaxed text-white/70">
               <p>
                 Élève appliqué, David commence par les natures mortes, les portraits
                 et les nus, perfectionnant sa technique auprès de la peintre Nadine
@@ -190,22 +190,25 @@ export default async function ArtistPage() {
 
       {/* Manifesto */}
       <section className="border-y border-white/10 bg-white/[0.03]">
-        <div className="mx-auto max-w-4xl px-4 py-14 text-center">
+        <div className="mx-auto max-w-4xl px-4 py-20 text-center">
           <BrushIcon className="mx-auto h-12 w-12 text-[var(--magenta)]" />
-          <blockquote className="mt-4 text-xl font-semibold leading-relaxed sm:text-2xl">
+          <blockquote className="display-2 mt-6 leading-snug">
             « Je veux que la couleur saute, que l'affiche se déchire et que le
             personnage prenne vie. Chaque toile est une histoire que je laisse
             parler — et je la peins à la main, une seule fois, pour vous. »
           </blockquote>
-          <p className="mt-4 text-sm uppercase tracking-[0.2em] accent-amber">— David Drioton</p>
+          <p className="mt-6 text-sm uppercase tracking-[0.2em] accent-amber">— David Drioton</p>
         </div>
       </section>
 
       {/* His universe — three pillars */}
-      <section className="mx-auto max-w-6xl px-4 py-14">
-        <h2 className="text-3xl font-black">
-          Son <span className="accent-text">univers</span>
-        </h2>
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+        <Reveal>
+          <p className="eyebrow">Trois signatures</p>
+          <h2 className="display-2 mt-4">
+            Son <span className="accent-text">univers</span>
+          </h2>
+        </Reveal>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {pillars.map((p, i) => (
             <Reveal key={p.title} delay={i * 0.1} className="card-glass rounded-2xl p-6">
@@ -219,10 +222,13 @@ export default async function ArtistPage() {
 
       {/* Parcours */}
       <section className="border-y border-white/10 bg-white/[0.03]">
-        <div className="mx-auto max-w-6xl px-4 py-14">
-          <h2 className="text-3xl font-black">
-            Le <span className="accent-amber">parcours</span>
-          </h2>
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+          <Reveal>
+            <p className="eyebrow">Repères</p>
+            <h2 className="display-2 mt-4">
+              Le <span className="accent-amber">parcours</span>
+            </h2>
+          </Reveal>
           <div className="mt-8 grid gap-6 sm:grid-cols-2">
             {milestones.map((m, i) => (
               <Reveal key={m.title} delay={i * 0.08} className="card-glass rounded-2xl p-6">
@@ -236,13 +242,14 @@ export default async function ArtistPage() {
       </section>
 
       {/* A window on the works */}
-      <section className="mx-auto max-w-6xl px-4 py-14">
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-black">
+            <p className="eyebrow">Sélection</p>
+            <h2 className="display-2 mt-4">
               Un aperçu de <span className="accent-text">l'atelier</span>
             </h2>
-            <p className="mt-2 max-w-xl text-white/60">
+            <p className="mt-3 max-w-xl text-white/60">
               Une sélection d'œuvres récentes, peintes à la main à Barjols. La
               galerie complète est à un clic.
             </p>
@@ -275,11 +282,11 @@ export default async function ArtistPage() {
 
       {/* CTA — commission */}
       <section className="border-t border-white/10 bg-white/[0.03]">
-        <div className="mx-auto max-w-4xl px-4 py-14 text-center">
-          <h2 className="text-3xl font-black">
+        <div className="mx-auto max-w-4xl px-4 py-20 text-center">
+          <h2 className="display-2">
             Une pièce <span className="accent-text">sur mesure</span> ?
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-white/70">
+          <p className="mx-auto mt-5 max-w-2xl leading-relaxed text-white/70">
             David peint aussi pour vous : choisissez un style, donnez la taille au
             centimètre, et l'atelier s'occupe du reste. Peint à la main, signé,
             livré de Barjols.
