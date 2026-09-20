@@ -143,8 +143,13 @@ export function GalleryLightbox({
                 .filter(Boolean)
                 .join(" · ") || "Œuvre originale, peinte à la main"}
             </p>
+            {artwork.sold ? (
+              <p className="mt-2 inline-block rounded-md bg-[var(--magenta)] px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                Vendue — cette pièce a trouvé sa maison
+              </p>
+            ) : null}
             <a
-              href={`/order?ref=${artwork.id}`}
+              href={artwork.sold ? "/order" : `/order?ref=${artwork.id}`}
               className="btn-accent mt-4 inline-block rounded-lg px-5 py-2 text-sm font-bold"
             >
               Commander une pièce dans cet esprit

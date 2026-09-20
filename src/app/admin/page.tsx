@@ -147,6 +147,38 @@ export default function AdminPage() {
     }
   }
 
+  async function toggleSold(id: string) {
+    const target = artworks.find((a) => a.id === id);
+    if (!target) return;
+    setError("");
+    setStatus("");
+    setBusy(true);
+    try {
+      const next = artworks.map((a) => {
+        if (a.id !== id) return a;
+        const updated = { ...a };
+        if (a.sold) {
+          delete updated.sold;
+        } else {
+          updated.sold = true;
+        }
+        return updated;
+      });
+      const nowSold = !target.sold;
+      await writeArtworks(
+        next,
+        `${nowSold ? "Vendue" : "De nouveau disponible"} : ${target.title}`
+      );
+      setStatus(
+        `« ${target.title} » ${nowSold ? "marquée vendue" : "remarquée disponible"} — le site se met à jour (≈ 2 min).`
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Enregistrement impossible.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function savePrice(id: string) {
     const target = artworks.find((a) => a.id === id);
     if (!target) return;
@@ -400,10 +432,23 @@ export default function AdminPage() {
                       Suppr.
                     </button>
                   </div>
-                  {/* Tarif fixe : affichage + édition inline */}
+                  {/* Statut + tarif fixe : affichage + édition inline */}
                   <div className="mt-2 flex items-center justify-between gap-2 pl-[3.25rem]">
+                    <button
+                      type="button"
+                      onClick={() => void toggleSold(a.id)}
+                      disabled={busy}
+                      title="Basculer entre « vendue » et « disponible »"
+                      className={`rounded-md border px-2 py-1 text-xs font-semibold transition disabled:opacity-40 ${
+                        a.sold
+                          ? "border-[var(--magenta)]/60 bg-[var(--magenta)]/10 text-[var(--magenta)]"
+                          : "border-white/15 text-white/60 hover:border-[var(--teal)] hover:text-[var(--teal)]"
+                      }`}
+                    >
+                      {a.sold ? "Vendue ✓" : "Disponible"}
+                    </button>
                     {editingId === a.id ? (
-                      <div className="flex w-full items-center gap-1.5">
+                      <div className="flex min-w-0 flex-1 items-center gap-1.5">
                         <input
                           value={editPrice}
                           onChange={(e) => setEditPrice(e.target.value)}

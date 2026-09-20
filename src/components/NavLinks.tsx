@@ -7,6 +7,7 @@ const nav = [
   { href: "/", label: "Accueil" },
   { href: "/artiste", label: "L'Artiste" },
   { href: "/gallery", label: "Galerie" },
+  { href: "/rendez-vous", label: "Rendez-vous" },
   { href: "/order", label: "Commander" },
 ];
 

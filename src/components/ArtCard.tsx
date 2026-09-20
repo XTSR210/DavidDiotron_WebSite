@@ -55,6 +55,12 @@ export function ArtCard({ artwork, index = 0 }: { artwork: Artwork; index?: numb
           <span className="absolute left-2 top-2 rounded-md bg-black/55 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--amber)] backdrop-blur">
             Pièce unique
           </span>
+          {/* Sold badge — proof of success, kept visible as a showcase */}
+          {artwork.sold ? (
+            <span className="absolute right-2 top-2 rounded-md bg-[var(--magenta)] px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-[0_4px_14px_rgba(224,33,138,0.45)]">
+              Vendue
+            </span>
+          ) : null}
           {/* Zoom hint */}
           <span
             aria-hidden
@@ -77,7 +83,11 @@ export function ArtCard({ artwork, index = 0 }: { artwork: Artwork; index?: numb
           </p>
           {artwork.note ? <p className="mt-2 text-sm text-white/70">{artwork.note}</p> : null}
           <div className="mt-3 flex items-center justify-between gap-2">
-            {artwork.priceEur && !artwork.priceOnRequest ? (
+            {artwork.sold ? (
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--magenta)]">
+                Trouvé sa maison
+              </span>
+            ) : artwork.priceEur && !artwork.priceOnRequest ? (
               <span className="text-sm">
                 <span className="font-semibold accent-amber">
                   {artwork.priceEur.toLocaleString("fr-FR")} €
@@ -102,12 +112,21 @@ export function ArtCard({ artwork, index = 0 }: { artwork: Artwork; index?: numb
               >
                 <WhatsAppIcon className="h-3.5 w-3.5" />
               </a>
-              <a
-                href={`/order?ref=${artwork.id}`}
-                className="btn-accent rounded-md px-3.5 py-1.5 text-xs font-bold"
-              >
-                Commander
-              </a>
+              {artwork.sold ? (
+                <a
+                  href="/order"
+                  className="rounded-md border border-white/20 px-3.5 py-1.5 text-xs font-bold text-white/80 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
+                >
+                  Similaire sur mesure
+                </a>
+              ) : (
+                <a
+                  href={`/order?ref=${artwork.id}`}
+                  className="btn-accent rounded-md px-3.5 py-1.5 text-xs font-bold"
+                >
+                  Commander
+                </a>
+              )}
             </div>
           </div>
           <p className="mt-2 text-[11px] leading-snug text-white/40">

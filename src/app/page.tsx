@@ -189,12 +189,20 @@ export default async function HomePage() {
                 Chaque pièce naît à l'atelier de Barjols : une toile, un geste, une
                 signature — et un seul collectionneur.
               </p>
-              <Link
-                href="/artiste"
-                className="mt-6 inline-block text-sm font-semibold accent-amber transition hover:brightness-110"
-              >
-                Découvrir l'artiste →
-              </Link>
+              <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
+                <Link
+                  href="/artiste"
+                  className="text-sm font-semibold accent-amber transition hover:brightness-110"
+                >
+                  Découvrir l'artiste →
+                </Link>
+                <Link
+                  href="/rendez-vous"
+                  className="text-sm font-semibold accent-amber transition hover:brightness-110"
+                >
+                  Visiter l'atelier à Barjols →
+                </Link>
+              </div>
             </div>
           </Reveal>
 

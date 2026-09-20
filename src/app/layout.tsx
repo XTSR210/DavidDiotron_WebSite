@@ -234,6 +234,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     { href: "/", label: "Accueil" },
                     { href: "/artiste", label: "L'Artiste" },
                     { href: "/gallery", label: "Galerie" },
+                    { href: "/rendez-vous", label: "Rendez-vous à l'atelier" },
                     { href: "/order", label: "Commander" },
                   ].map((l) => (
                     <li key={l.href}>

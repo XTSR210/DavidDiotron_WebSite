@@ -14,6 +14,8 @@ export interface Artwork {
   priceEur?: number;
   /** True when the piece is not priced publicly. */
   priceOnRequest?: boolean;
+  /** True when the piece has found its home (kept visible as a showcase). */
+  sold?: boolean;
   /** `/artworks/…` for bundled works, `/uploads/…` for admin uploads, or an absolute URL. */
   image: string;
   /** Where the image came from, e.g. "Instagram @daviddrioton". */

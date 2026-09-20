@@ -240,7 +240,7 @@ const faq = [
   },
   {
     q: "Puis-je visiter l'atelier avant de décider ?",
-    a: "Oui — l'atelier de Barjols (Var) ouvre ses portes lors des Portes Ouvertes des artistes, et sur rendez-vous pour les projets de commande. Écrivez par email ou Instagram pour convenir d'un moment.",
+    a: "Oui — c'est même conseillé : les toiles gagnent à être vues en vrai. L'atelier de Barjols (Var) reçoit sur rendez-vous pour choisir une pièce, discuter un projet ou retirer une commande. Demandez votre créneau sur la page « Rendez-vous » (par WhatsApp, email ou téléphone) — David confirme sous 48 h.",
   },
   {
     q: "Les œuvres prennent-elles de la valeur ?",
@@ -286,7 +286,14 @@ export function Faq() {
           >
             Écrivez à l'atelier
           </a>{" "}
-          — David répond en personne.
+          — David répond en personne. Envie de voir les toiles en vrai ?{" "}
+          <Link
+            href="/rendez-vous"
+            className="font-semibold text-[var(--amber)] hover:underline"
+          >
+            Prenez rendez-vous à l'atelier
+          </Link>
+          .
         </p>
       </Reveal>
     </section>

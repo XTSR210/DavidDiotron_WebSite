@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "gallery", priority: 0.9 },
     { path: "artiste", priority: 0.8 },
     { path: "order", priority: 0.8 },
+    { path: "rendez-vous", priority: 0.7 },
     { path: "mentions-legales", priority: 0.2 },
     { path: "cgu", priority: 0.2 },
     { path: "cgv", priority: 0.2 },

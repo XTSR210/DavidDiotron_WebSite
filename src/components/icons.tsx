@@ -212,6 +212,16 @@ export function WalletIcon({ className }: IconProps) {
   );
 }
 
+/** Clock — opening by appointment, response times. */
+export function ClockIcon({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </Svg>
+  );
+}
+
 /** Calendar clock — lead time / planning a visit. */
 export function CalendarIcon({ className }: IconProps) {
   return (
