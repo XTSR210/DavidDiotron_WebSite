@@ -10,8 +10,9 @@ import {
   MailIcon,
   MapPinIcon,
   PhoneIcon,
+  WhatsAppIcon,
 } from "@/components/icons";
-import { site } from "@/lib/site";
+import { site, waLink } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -171,6 +172,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     >
                       <MailIcon className="h-4 w-4 shrink-0 text-[var(--magenta)]" />
                       {site.email}
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href={waLink("Bonjour David, j'aimerais discuter d'une toile.")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-white/75 transition hover:text-[var(--teal)]"
+                    >
+                      <WhatsAppIcon className="h-4 w-4 shrink-0 text-[var(--teal)]" />
+                      WhatsApp direct
                     </a>
                   </li>
                   <li>

@@ -10,8 +10,8 @@ import {
 } from "@/lib/pricing";
 import type { Artwork } from "@/lib/types";
 import { LeadTimeNote } from "@/components/commercial";
-import { CanvasCheckIcon } from "@/components/icons";
-import { site } from "@/lib/site";
+import { CanvasCheckIcon, MailIcon, WhatsAppIcon } from "@/components/icons";
+import { site, waLink } from "@/lib/site";
 
 function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
   const params = useSearchParams();
@@ -24,50 +24,51 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
-  const [error, setError] = useState("");
+  const [sentVia, setSentVia] = useState<"email" | "whatsapp" | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const quote = useMemo(() => quoteCommission(widthCm, heightCm), [widthCm, heightCm]);
   const reference = artworks.find((a) => a.id === referenceId);
 
-  // Récapitulatif partagé entre l'email (mailto) et le bouton « Copier ».
-  const subject = `Commande sur mesure — ${reference?.title ?? (title || "Création libre")}`;
+  // Récapitulatif partagé : email (mailto), WhatsApp (wa.me) et bouton Copier.
+  const subject = `Demande de devis — ${reference?.title ?? (title || "Création libre")}`;
   const body = [
     "Bonjour David,",
     "",
-    "Je souhaite commander une pièce sur mesure :",
+    "Je souhaite commander une pièce sur mesure et recevoir un devis ferme :",
     `- Référence : ${reference?.title ?? "Création libre"}`,
     `- Idée / sujet : ${title}`,
     `- Dimensions : ${formatDimensions(quote.widthCm, quote.heightCm)} (${quote.areaCm2.toLocaleString("fr-FR")} cm²)`,
-    `- Prix estimé (approximatif, sous réserve de devis) : ${formatEur(quote.priceEur)}`,
+    `- Estimation i-CAC (indicative) : ${formatEur(quote.priceEur)}`,
     "",
     `Nom : ${name}`,
     `Email : ${email}`,
     ...(message ? [`Message : ${message}`] : []),
   ].join("\n");
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-
-    // Site 100 % statique (GitHub Pages) : la commande est envoyée par
-    // email à l'atelier, avec tout le récapitulatif pré-rempli.
-    const mailto = `mailto:${site.email}?subject=${encodeURIComponent(
-      subject
-    )}&body=${encodeURIComponent(body)}`;
-
-    // Ouvre le client mail dans une fenêtre séparée, SANS quitter ni
-    // rediriger la page de commande actuelle.
+  function openLink(href: string) {
+    // Ouvre le client mail / WhatsApp dans une fenêtre séparée, SANS
+    // quitter ni rediriger la page de commande actuelle.
     const link = document.createElement("a");
-    link.href = mailto;
+    link.href = href;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
     link.style.display = "none";
     document.body.appendChild(link);
     link.click();
     link.remove();
-    setStatus("done");
   }
 
-  const [copied, setCopied] = useState(false);
+  function sendEmail(e: React.FormEvent) {
+    e.preventDefault();
+    openLink(`mailto:${site.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+    setSentVia("email");
+  }
+
+  function sendWhatsApp() {
+    openLink(waLink(body));
+    setSentVia("whatsapp");
+  }
 
   async function copyOrder() {
     const text = `${subject}\n\n${body}`;
@@ -94,36 +95,39 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
     setTimeout(() => setCopied(false), 2500);
   }
 
-  if (status === "done") {
+  if (sentVia) {
     return (
       <div className="card-glass rounded-2xl p-8 text-center">
         <CanvasCheckIcon className="mx-auto h-14 w-14 text-[var(--teal)]" />
-        <h2 className="mt-3 text-2xl font-bold">Commande prête à envoyer !</h2>
+        <h2 className="mt-3 text-2xl font-bold">Demande de devis prête !</h2>
         <p className="mt-2 text-white/70">
           {formatDimensions(quote.widthCm, quote.heightCm)} ·{" "}
           <span className="accent-amber font-semibold">≈ {formatEur(quote.priceEur)}</span>{" "}
-          <span className="text-sm text-white/50">(estimation)</span>
+          <span className="text-sm text-white/50">(estimation indicative)</span>
         </p>
-        <p className="mt-3 text-sm text-white/60">
-          Votre messagerie s'est ouverte avec le récapitulatif pré-rempli.
-          Envoyez-le à l'atelier — David vous répondra pour confirmer la pièce
-          et le paiement. Sinon, contactez-le directement sur{" "}
-          <a
-            href={site.social[0].href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-semibold text-[var(--amber)] hover:underline"
-          >
-            Instagram
-          </a>
-          .
+        <p className="mt-3 text-sm leading-relaxed text-white/60">
+          {sentVia === "email"
+            ? "Votre messagerie s'est ouverte avec le récapitulatif pré-rempli — envoyez-le à l'atelier."
+            : "WhatsApp s'est ouvert avec votre demande pré-remplie — envoyez le message à l'atelier."}{" "}
+          David vous répond <span className="font-semibold text-white/85">sous 48 h</span> et{" "}
+          <span className="font-semibold text-white/85">échange avec vous directement</span>{" "}
+          jusqu'à un <span className="font-semibold text-[var(--amber)]">devis ferme : le prix est fixe et garanti</span>.
         </p>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
-          <a
-            href={`mailto:${site.email}`}
-            className="btn-accent rounded-lg px-5 py-2.5 font-semibold"
+          <button
+            type="button"
+            onClick={sendWhatsApp}
+            className="flex items-center gap-2 rounded-lg border border-[var(--teal)]/50 px-5 py-2.5 font-semibold text-[var(--teal)] transition hover:bg-[var(--teal)]/10"
           >
-            Écrire à l'atelier
+            <WhatsAppIcon className="h-4 w-4" />
+            {sentVia === "whatsapp" ? "Rouvrir WhatsApp" : "Envoyer sur WhatsApp"}
+          </button>
+          <a
+            href={`mailto:${site.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
+            className="btn-accent flex items-center gap-2 rounded-lg px-5 py-2.5 font-semibold"
+          >
+            <MailIcon className="h-4 w-4" />
+            {sentVia === "email" ? "Réouvrir l'email" : "Envoyer par email"}
           </a>
           <button
             type="button"
@@ -132,20 +136,16 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
           >
             {copied ? "Copié ✓" : "Copier le récapitulatif"}
           </button>
-          <a
-            href={site.social[0].href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-lg border border-white/20 px-5 py-2.5 font-semibold text-white/85 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
-          >
-            Instagram
-          </a>
         </div>
         {copied ? (
           <p className="mt-3 text-xs text-emerald-400">
-            Récapitulatif copié ! Collez-le dans un email à {site.email} ou en message Instagram.
+            Récapitulatif copié ! Collez-le dans un email à {site.email}, sur WhatsApp ou en message Instagram.
           </p>
         ) : null}
+        <p className="mt-4 text-xs text-white/40">
+          Aucun paiement à cette étape : vous validez ensemble le devis (prix fixe),
+          puis un acompte lance la toile.
+        </p>
       </div>
     );
   }
@@ -154,7 +154,7 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
     "w-full rounded-lg border border-white/15 bg-[var(--ink-soft)] px-3 py-2.5 text-sm outline-none focus:border-[var(--magenta)]";
 
   return (
-    <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[1fr_360px]">
+    <form onSubmit={sendEmail} className="grid gap-6 lg:grid-cols-[1fr_360px]">
       <div className="card-glass space-y-5 rounded-2xl p-6">
         <div>
           <label className="mb-1.5 block text-sm font-semibold">Style de référence</label>
@@ -255,8 +255,8 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
           </p>
           <p className="mt-1.5 text-xs text-white/50">
             <span className="font-semibold text-white/70">Prix approximatif</span> :
-            estimation indicative, confirmée par un devis ferme de l'atelier
-            (technique, support et livraison peuvent l'ajuster).
+            estimation indicative — après échanges avec l'atelier, vous recevez un{" "}
+            <span className="font-semibold text-white/70">devis ferme au tarif fixe</span>.
           </p>
         </div>
 
@@ -290,13 +290,14 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={3}
+            placeholder="Ambiance, couleurs, délai souhaité, budget…"
             className={inputCls}
           />
         </div>
       </div>
 
       <aside className="card-glass h-fit rounded-2xl p-6 lg:sticky lg:top-20">
-        <h2 className="text-lg font-bold">Récapitulatif</h2>
+        <h2 className="text-lg font-bold">Votre demande de devis</h2>
         <dl className="mt-4 space-y-2 text-sm">
           <div className="flex justify-between">
             <dt className="text-white/60">Surface</dt>
@@ -312,21 +313,44 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
           </div>
         </dl>
         <p className="mt-2 text-xs leading-relaxed text-white/45">
-          *Prix approximatif, à titre indicatif — le devis ferme est confirmé
-          par l'atelier avant toute commande.
+          *Prix approximatif, à titre indicatif — le <strong className="text-white/70">devis ferme</strong>{" "}
+          (tarif fixe) est arrêté ensemble avec l'atelier avant toute commande.
         </p>
-        <p className="mt-3 text-xs text-white/40">
-          Envoyez le récapitulatif par email : David vous confirmera la pièce,
-          le devis, le délai et le moyen de paiement (virement, chèque ou
-          retrait à l'atelier de Barjols).
-        </p>
+
+        <div className="mt-5 space-y-2.5">
+          <button type="submit" className="btn-accent flex w-full items-center justify-center gap-2 rounded-lg py-3 font-bold">
+            <MailIcon className="h-4 w-4" />
+            Envoyer par email
+          </button>
+          <button
+            type="button"
+            onClick={sendWhatsApp}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--teal)]/60 py-3 font-bold text-[var(--teal)] transition hover:bg-[var(--teal)]/10"
+          >
+            <WhatsAppIcon className="h-5 w-5" />
+            Discuter sur WhatsApp
+          </button>
+          <button
+            type="button"
+            onClick={copyOrder}
+            className="w-full rounded-lg border border-white/15 py-2 text-xs font-semibold text-white/60 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
+          >
+            {copied ? "Copié ✓" : "Copier le récapitulatif"}
+          </button>
+        </div>
+        {copied ? (
+          <p className="mt-2 text-xs text-emerald-400">
+            Copié ! Collez-le dans un email, sur WhatsApp ou Instagram.
+          </p>
+        ) : null}
+
         <div className="mt-4">
           <LeadTimeNote />
         </div>
-        {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
-        <button type="submit" className="btn-accent mt-5 w-full rounded-lg py-3 font-bold">
-          Valider ma commande
-        </button>
+        <p className="mt-3 text-xs text-white/40">
+          Devis gratuit, sans engagement. Le moyen de paiement (virement, chèque ou
+          retrait à l'atelier de Barjols) est convenu ensemble.
+        </p>
       </aside>
     </form>
   );

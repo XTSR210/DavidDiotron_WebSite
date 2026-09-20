@@ -104,6 +104,16 @@ export function PhoneIcon({ className }: IconProps) {
   );
 }
 
+/** WhatsApp — discussion directe client ↔ atelier. */
+export function WhatsAppIcon({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M12 3a9 9 0 0 0-7.7 13.6L3 21l4.5-1.2A9 9 0 1 0 12 3Z" />
+      <path d="M8.9 7.8c-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.9.9-1 2.2-.2 3.9.8 1.7 2.3 3.4 4.4 4.4 1.7.8 3 .7 3.9-.2.2-.2.3-.5.3-.7v-.5c0-.2 0-.4-.5-.6l-1.7-.8c-.2-.1-.4-.1-.6.1l-.7.9c-.1.2-.3.2-.5.1-.7-.3-1.4-.7-2-1.4-.6-.6-1-1.3-1.4-2-.1-.2-.1-.4.1-.5l.9-.7c.2-.2.2-.4.1-.6l-.8-1.7Z" />
+    </Svg>
+  );
+}
+
 /** Envelope for email. */
 export function MailIcon({ className }: IconProps) {
   return (

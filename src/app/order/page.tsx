@@ -5,8 +5,9 @@ import { readArtworks } from "@/lib/artworks";
 
 
 export const metadata = {
-  title: "Commander — David Drioton",
-  description: "Commandez une pièce sur mesure, peinte à l'atelier de Barjols.",
+  title: "Commander & devis — David Drioton",
+  description:
+    "Demandez votre devis gratuit pour une pièce sur mesure peinte à l'atelier de Barjols : estimation i-CAC en direct, échange direct avec l'artiste, tarif fixe garanti.",
 };
 
 export default async function OrderPage() {
@@ -25,18 +26,20 @@ export default async function OrderPage() {
         </Reveal>
         <Reveal delay={0.16}>
           <p className="mt-5 leading-relaxed text-white/60">
-            Chaque toile est peinte à la main à l'atelier de Barjols. Choisissez
-            une référence, donnez la taille au centimètre : l'estimation suit la
-            cote officielle i-CAC, et l'atelier vous répond avec un devis ferme.
+            Chaque toile est peinte à la main à l'atelier de Barjols. Décrivez
+            votre projet : l'estimation s'affiche en direct selon la cote
+            officielle i-CAC, vous en discutez directement avec David (email ou
+            WhatsApp), puis vous recevez un <strong className="text-white/85">devis ferme —
+            tarif fixe et garanti</strong>. Aucune surprise.
           </p>
         </Reveal>
-        {/* The three steps, readable before the form */}
+        {/* Le parcours devis, lisible avant le formulaire */}
         <Reveal delay={0.24}>
           <ol className="mt-7 grid gap-3 sm:grid-cols-3">
             {[
-              ["1", "Choisissez", "une référence ou une idée libre"],
-              ["2", "Dimensionnez", "au centimètre — estimation en direct"],
-              ["3", "Envoyez", "le récapitulatif : David confirme le devis"],
+              ["1", "Décrivez", "votre idée, la taille au cm, la référence"],
+              ["2", "Discutez", "avec David — réponse sous 48 h, email ou WhatsApp"],
+              ["3", "Devis ferme", "tarif fixe validé ensemble, puis création"],
             ].map(([n, t, d]) => (
               <li key={n} className="card-glass rounded-xl p-4">
                 <p className="accent-text text-lg font-black">{n}</p>
@@ -45,6 +48,15 @@ export default async function OrderPage() {
               </li>
             ))}
           </ol>
+        </Reveal>
+        <Reveal delay={0.3}>
+          <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold uppercase tracking-wider text-white/45">
+            <span>Devis gratuit</span>
+            <span aria-hidden className="text-[var(--magenta)]">·</span>
+            <span>Sans engagement</span>
+            <span aria-hidden className="text-[var(--magenta)]">·</span>
+            <span>Prix fixe une fois le devis validé</span>
+          </p>
         </Reveal>
       </header>
       <div className="mt-10">

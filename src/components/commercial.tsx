@@ -12,8 +12,9 @@ import {
   ScrollIcon,
   StarIcon,
   WalletIcon,
+  WhatsAppIcon,
 } from "@/components/icons";
-import { site } from "@/lib/site";
+import { site, waLink } from "@/lib/site";
 
 /* ------------------------------------------------------------------ */
 /* BANDEAU CTA — rappel à l'action répété en bas de chaque page.       */
@@ -53,7 +54,7 @@ export function CtaBanner({
             </Link>
           </div>
           <p className="mt-5 text-xs text-white/45">
-            Réponse personnalisée sous 48 h · devis gratuit · sans engagement
+            Réponse sous 48 h · devis gratuit · tarif fixe une fois le devis validé
           </p>
         </div>
       </Reveal>
@@ -215,7 +216,15 @@ export function Testimonials() {
 const faq = [
   {
     q: "Comment se passe une commande sur mesure ?",
-    a: "Vous choisissez une référence (ou une idée libre), donnez les dimensions au centimètre, puis envoyez le récapitulatif. David vous répond sous 48 h avec un croquis d'intention et un devis ferme. Après validation et acompte, la toile entre à l'atelier.",
+    a: "Vous choisissez une référence (ou une idée libre), donnez les dimensions au centimètre, puis envoyez votre demande de devis — par email ou sur WhatsApp. David vous répond sous 48 h avec un croquis d'intention et un devis ferme. Après validation et acompte, la toile entre à l'atelier.",
+  },
+  {
+    q: "Le prix peut-il changer après le devis ?",
+    a: "Non. Une fois le devis validé, le tarif est fixe et garanti : ni frais cachés, ni surprise. Seule une modification de votre demande (taille, technique, finition) peut donner lieu à un nouveau devis — toujours validé ensemble avant de démarrer.",
+  },
+  {
+    q: "Peut-on discuter directement avec l'artiste ?",
+    a: "Oui — c'est le principe de l'atelier. Sur WhatsApp ou par email, c'est David en personne qui répond : il vous conseille sur le format et les couleurs, envoie des photos d'avancement, et ajuste le devis avec vous jusqu'à un prix fixe qui convient aux deux parties.",
   },
   {
     q: "Quel est le délai de réalisation ?",
@@ -303,6 +312,15 @@ export function ProjectStrip({ compact = false }: { compact?: boolean }) {
         </span>
       </p>
       <div className="flex flex-wrap gap-2">
+        <a
+          href={waLink("Bonjour David, j'ai un projet de toile à vous proposer.")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 rounded-lg border border-[var(--teal)]/60 px-4 py-2 text-sm font-semibold text-[var(--teal)] transition hover:bg-[var(--teal)]/10"
+        >
+          <WhatsAppIcon className="h-4 w-4" />
+          WhatsApp
+        </a>
         <a
           href={`mailto:${site.email}?subject=${encodeURIComponent("Projet de commande")}`}
           className="btn-accent rounded-lg px-4 py-2 text-sm font-semibold"

@@ -16,6 +16,8 @@ export const site = {
   // ── À compléter ───────────────────────────────────────────────
   phone: "+33 6 00 00 00 00", // TODO: vrai numéro de l'atelier
   email: "contact@daviddrioton.fr", // TODO: vraie adresse email
+  /** Numéro WhatsApp (format international) — discussion directe client ↔ atelier. */
+  whatsapp: "+33600000000", // TODO: même numéro, format international
   // ──────────────────────────────────────────────────────────────
 
   social: [
@@ -29,6 +31,15 @@ export const site = {
 
 /** Année courante pour le copyright. */
 export const currentYear = () => new Date().getFullYear();
+
+/**
+ * Lien WhatsApp « clic-to-chat » avec message pré-rempli — le canal de
+ * discussion directe entre le client et l'atelier (site 100 % statique).
+ */
+export function waLink(text: string): string {
+  const num = site.whatsapp.replace(/[^0-9]/g, "");
+  return `https://wa.me/${num}?text=${encodeURIComponent(text)}`;
+}
 
 /**
  * Préfixe un chemin d'image (ex. "/artworks/art-01.jpg") avec le basePath

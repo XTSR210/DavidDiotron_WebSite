@@ -4,6 +4,8 @@ import { useCallback, useState } from "react";
 import type { Artwork } from "@/lib/types";
 import { useTilt } from "@/components/useTilt";
 import { useLightbox } from "@/components/GalleryLightbox";
+import { WhatsAppIcon } from "@/components/icons";
+import { waLink } from "@/lib/site";
 
 /**
  * Gallery artwork card with 3D pointer tilt, painterly sheen sweep and a
@@ -76,22 +78,41 @@ export function ArtCard({ artwork, index = 0 }: { artwork: Artwork; index?: numb
           {artwork.note ? <p className="mt-2 text-sm text-white/70">{artwork.note}</p> : null}
           <div className="mt-3 flex items-center justify-between gap-2">
             {artwork.priceEur && !artwork.priceOnRequest ? (
-              <span className="font-semibold accent-amber">
-                {artwork.priceEur.toLocaleString("fr-FR")} €
+              <span className="text-sm">
+                <span className="font-semibold accent-amber">
+                  {artwork.priceEur.toLocaleString("fr-FR")} €
+                </span>{" "}
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
+                  prix fixe
+                </span>
               </span>
             ) : (
-              <span className="text-xs text-white/40">Prix sur demande</span>
+              <span className="text-xs text-white/40">Sur devis — parlons-en</span>
             )}
-            <a
-              href={`/order?ref=${artwork.id}`}
-              className="btn-accent rounded-md px-3.5 py-1.5 text-xs font-bold"
-            >
-              Commander
-            </a>
+            <div className="flex items-center gap-1.5">
+              <a
+                href={waLink(
+                  `Bonjour David, je suis intéressé(e) par « ${artwork.title} » vue sur votre site. Quel est le prix fixe et le délai ?`
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Discuter directement avec l'atelier sur WhatsApp"
+                aria-label={`Discuter de « ${artwork.title} » sur WhatsApp`}
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-[var(--teal)]/50 text-[var(--teal)] transition hover:bg-[var(--teal)]/10"
+              >
+                <WhatsAppIcon className="h-3.5 w-3.5" />
+              </a>
+              <a
+                href={`/order?ref=${artwork.id}`}
+                className="btn-accent rounded-md px-3.5 py-1.5 text-xs font-bold"
+              >
+                Commander
+              </a>
+            </div>
           </div>
           <p className="mt-2 text-[11px] leading-snug text-white/40">
             Une seule pièce existe — ou une création sur mesure dans le même
-            esprit, à la taille de votre choix.
+            esprit, à la taille de votre choix. Devis ferme = tarif fixe.
           </p>
         </div>
       </div>

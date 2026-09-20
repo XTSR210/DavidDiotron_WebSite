@@ -46,6 +46,10 @@ export default function AdminPage() {
   const [title, setTitle] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [price, setPrice] = useState("");
+  /** id de l'œuvre dont on édite le prix + valeur courante du champ. */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editPrice, setEditPrice] = useState("");
 
   const inputCls =
     "w-full rounded-lg border border-white/15 bg-[var(--ink-soft)] px-3 py-2 text-sm outline-none focus:border-[var(--amber)]";
@@ -109,6 +113,21 @@ export default function AdminPage() {
     });
   }
 
+  /** Écrit la liste d'œuvres dans le dépôt (commit automatique). */
+  async function writeArtworks(next: Artwork[], message: string): Promise<boolean> {
+    const newSha = await putFile(
+      token.trim(),
+      DEFAULT_REPO,
+      ARTWORKS_PATH,
+      toBase64(`${JSON.stringify(next, null, 2)}\n`),
+      message,
+      jsonSha ?? undefined
+    );
+    setJsonSha(newSha ?? jsonSha);
+    setArtworks(next);
+    return true;
+  }
+
   async function remove(id: string) {
     const target = artworks.find((a) => a.id === id);
     if (!target || !window.confirm(`Supprimer « ${target.title} » ?`)) return;
@@ -116,20 +135,53 @@ export default function AdminPage() {
     setStatus("");
     setBusy(true);
     try {
-      const next = artworks.filter((a) => a.id !== id);
-      const newSha = await putFile(
-        token.trim(),
-        DEFAULT_REPO,
-        ARTWORKS_PATH,
-        toBase64(`${JSON.stringify(next, null, 2)}\n`),
-        `Œuvre supprimée : ${target.title}`,
-        jsonSha ?? undefined
+      await writeArtworks(
+        artworks.filter((a) => a.id !== id),
+        `Œuvre supprimée : ${target.title}`
       );
-      setJsonSha(newSha ?? jsonSha);
-      setArtworks(next);
       setStatus(`« ${target.title} » supprimée — le site se met à jour automatiquement (≈ 2 min).`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Suppression impossible.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function savePrice(id: string) {
+    const target = artworks.find((a) => a.id === id);
+    if (!target) return;
+    setError("");
+    setStatus("");
+    const raw = editPrice.trim();
+    const value = raw === "" ? null : Number(raw.replace(",", "."));
+    if (raw !== "" && (!Number.isFinite(value) || (value as number) < 0)) {
+      setError("Prix invalide : entrez un nombre (ex. 950) ou laissez vide.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const next = artworks.map((a) => {
+        if (a.id !== id) return a;
+        const updated = { ...a };
+        if (value === null) {
+          delete updated.priceEur;
+          delete updated.priceOnRequest;
+        } else {
+          updated.priceEur = value as number;
+          delete updated.priceOnRequest;
+        }
+        return updated;
+      });
+      await writeArtworks(
+        next,
+        `Tarif fixé : ${target.title}${value ? ` — ${value} €` : " — sur devis"}`
+      );
+      setEditingId(null);
+      setStatus(
+        `Tarif de « ${target.title} » ${value ? `fixé à ${value} €` : "mis sur devis"} — le site se met à jour (≈ 2 min).`
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Enregistrement impossible.");
     } finally {
       setBusy(false);
     }
@@ -163,18 +215,16 @@ export default function AdminPage() {
       }
 
       const artwork: Artwork = { id, title: title.trim(), image };
+      const rawPrice = price.trim();
+      if (rawPrice !== "") {
+        const value = Number(rawPrice.replace(",", "."));
+        if (!Number.isFinite(value) || value < 0)
+          throw new Error("Prix invalide : entrez un nombre (ex. 950) ou laissez vide.");
+        artwork.priceEur = value;
+      }
       const next = [...artworks, artwork];
-      const newSha = await putFile(
-        token.trim(),
-        DEFAULT_REPO,
-        ARTWORKS_PATH,
-        toBase64(`${JSON.stringify(next, null, 2)}\n`),
-        `Œuvre ajoutée : ${artwork.title}`,
-        jsonSha ?? undefined
-      );
-      setJsonSha(newSha ?? jsonSha);
-      setArtworks(next);
-      setTitle(""); setImageUrl(""); setImageFile(null);
+      await writeArtworks(next, `Œuvre ajoutée : ${artwork.title}`);
+      setTitle(""); setImageUrl(""); setImageFile(null); setPrice("");
       setStatus(`« ${artwork.title} » ajoutée ✓ — le site se met à jour automatiquement (≈ 2 min).`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ajout impossible.");
@@ -291,6 +341,13 @@ export default function AdminPage() {
                   />
                 </div>
               </div>
+              <input
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                inputMode="decimal"
+                placeholder="Prix fixe en € (optionnel — vide = sur devis)"
+                className={`${inputCls} sm:max-w-xs`}
+              />
               {error ? <p className="text-sm text-red-400">{error}</p> : null}
               {status ? (
                 <p className="flex items-center gap-2 text-sm text-emerald-400">
@@ -311,36 +368,102 @@ export default function AdminPage() {
             <h2 className="text-base font-bold text-white/70">Œuvres en ligne</h2>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {artworks.map((a) => (
-                <div key={a.id} className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={publicImage(a.image)}
-                    alt={a.title}
-                    loading="lazy"
-                    className="h-14 w-10 shrink-0 rounded object-cover bg-white/10"
-                    onError={(e) => {
-                      const img = e.currentTarget;
-                      // Si le chemin préfixé échoue, retente sans préfixe
-                      // (et inversement) une seule fois.
-                      const alt = img.src.includes(DEPLOY_BASE)
-                        ? img.src.replace(DEPLOY_BASE, "")
-                        : DEPLOY_BASE + img.getAttribute("src");
-                      if (!img.dataset.retried) {
-                        img.dataset.retried = "1";
-                        img.src = alt;
-                      }
-                    }}
-                  />
-                  <span className="min-w-0 flex-1 truncate text-sm text-white">{a.title}</span>
-                  <button
-                    type="button"
-                    onClick={() => remove(a.id)}
-                    disabled={busy}
-                    title="Supprimer cette œuvre"
-                    className="shrink-0 rounded-md border border-white/15 px-2 py-1 text-xs text-white/50 transition hover:border-red-400 hover:text-red-400 disabled:opacity-40"
-                  >
-                    Suppr.
-                  </button>
+                <div key={a.id} className="rounded-xl bg-white/5 p-3">
+                  <div className="flex items-center gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={publicImage(a.image)}
+                      alt={a.title}
+                      loading="lazy"
+                      className="h-14 w-10 shrink-0 rounded object-cover bg-white/10"
+                      onError={(e) => {
+                        const img = e.currentTarget;
+                        // Si le chemin préfixé échoue, retente sans préfixe
+                        // (et inversement) une seule fois.
+                        const alt = img.src.includes(DEPLOY_BASE)
+                          ? img.src.replace(DEPLOY_BASE, "")
+                          : DEPLOY_BASE + img.getAttribute("src");
+                        if (!img.dataset.retried) {
+                          img.dataset.retried = "1";
+                          img.src = alt;
+                        }
+                      }}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-sm text-white">{a.title}</span>
+                    <button
+                      type="button"
+                      onClick={() => remove(a.id)}
+                      disabled={busy}
+                      title="Supprimer cette œuvre"
+                      className="shrink-0 rounded-md border border-white/15 px-2 py-1 text-xs text-white/50 transition hover:border-red-400 hover:text-red-400 disabled:opacity-40"
+                    >
+                      Suppr.
+                    </button>
+                  </div>
+                  {/* Tarif fixe : affichage + édition inline */}
+                  <div className="mt-2 flex items-center justify-between gap-2 pl-[3.25rem]">
+                    {editingId === a.id ? (
+                      <div className="flex w-full items-center gap-1.5">
+                        <input
+                          value={editPrice}
+                          onChange={(e) => setEditPrice(e.target.value)}
+                          inputMode="decimal"
+                          placeholder="ex. 950 (vide = sur devis)"
+                          className="w-full rounded-md border border-white/15 bg-[var(--ink-soft)] px-2 py-1 text-xs outline-none focus:border-[var(--amber)]"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              void savePrice(a.id);
+                            }
+                            if (e.key === "Escape") setEditingId(null);
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void savePrice(a.id)}
+                          disabled={busy}
+                          className="btn-accent shrink-0 rounded-md px-2.5 py-1 text-xs font-bold disabled:opacity-40"
+                        >
+                          OK
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingId(null)}
+                          className="shrink-0 rounded-md border border-white/15 px-2 py-1 text-xs text-white/50"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="text-xs text-white/60">
+                          {a.priceEur && !a.priceOnRequest ? (
+                            <>
+                              <span className="font-bold text-[var(--amber)]">
+                                {a.priceEur.toLocaleString("fr-FR")} €
+                              </span>{" "}
+                              <span className="text-white/35">prix fixe</span>
+                            </>
+                          ) : (
+                            <span className="text-white/35">sur devis</span>
+                          )}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingId(a.id);
+                            setEditPrice(
+                              a.priceEur && !a.priceOnRequest ? String(a.priceEur) : ""
+                            );
+                          }}
+                          className="rounded-md border border-white/15 px-2 py-1 text-xs text-white/60 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
+                        >
+                          Fixer le prix
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

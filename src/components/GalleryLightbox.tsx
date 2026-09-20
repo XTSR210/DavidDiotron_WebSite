@@ -10,6 +10,8 @@ import {
   type ReactNode,
 } from "react";
 import type { Artwork } from "@/lib/types";
+import { WhatsAppIcon } from "@/components/icons";
+import { waLink } from "@/lib/site";
 
 /* ------------------------------------------------------------------ */
 /* Contexte : n'importe quelle carte peut « ouvrir » la lightbox.      */
@@ -147,6 +149,24 @@ export function GalleryLightbox({
             >
               Commander une pièce dans cet esprit
             </a>
+            {artwork.priceEur && !artwork.priceOnRequest ? (
+              <p className="mt-2 text-sm font-semibold accent-amber">
+                Prix fixe : {artwork.priceEur.toLocaleString("fr-FR")} €
+              </p>
+            ) : null}
+            <p className="mt-2">
+              <a
+                href={waLink(
+                  `Bonjour David, je discute avec vous au sujet de « ${artwork.title} » (vue sur votre site).`
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--teal)] transition hover:underline"
+              >
+                <WhatsAppIcon className="h-3.5 w-3.5" />
+                Discuter de cette œuvre directement avec David
+              </a>
+            </p>
             <p className="mt-2 text-[11px] text-white/40">
               Pièce unique peinte à la main · certificat d'authenticité · livraison
               protégée — ou création sur mesure à vos dimensions.
