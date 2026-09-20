@@ -7,6 +7,7 @@ import {
   AwardIcon,
   BrushIcon,
   HandIcon,
+  NewspaperIcon,
   PaletteIcon,
   ScissorsIcon,
 } from "@/components/icons";
@@ -45,22 +46,57 @@ const milestones = [
   {
     year: "La rencontre",
     title: "Nadine Foster & Jackson Pollock",
-    text: "Sa rencontre avec la peintre Nadine Foster et la découverte de Jackson Pollock déclenchent une bascule décisive vers un pop art de vitalité flamboyante.",
+    text: "Sa rencontre avec la peintre Nadine Foster affine sa technique ; la découverte de Jackson Pollock libère son geste. Une bascule décisive.",
+  },
+  {
+    year: "2011",
+    title: "Premières expositions parisiennes",
+    text: "Galerie Estade, place des Vosges, et galerie Next à Toulouse — le travail sort de l'atelier. Il remporte la même année un important concours d'affiches.",
+  },
+  {
+    year: "2012",
+    title: "Figaro Magazine & salons du Sud",
+    text: "Le Figaro Magazine lui consacre un article (novembre 2012). Salons S'MART d'Aix-en-Provence, Valbonne, Elan d'Arts de Montpellier, galerie du Crescendo à Mougins, galerie d'As à Cavalaire.",
+  },
+  {
+    year: "2013",
+    title: "Univers des Arts",
+    text: "Article dans la revue Univers des Arts (mai 2013) ; salon S'MART d'Aix à nouveau. La reconnaissance s'installe.",
+  },
+  {
+    year: "2014",
+    title: "Salon de Lourmarin & Carre d'artistes",
+    text: "Salon international d'arts contemporain de Lourmarin (juillet 2014), entrée dans le réseau des galeries Carre d'artistes (Miami, Lisbonne, Chine).",
   },
   {
     year: "2017",
-    title: "Prix Univers des Arts",
-    text: "Son travail est distingué par le Prix Univers des Arts, un repère important dans son parcours d'artiste reconnu.",
+    title: "Prix Univers des Arts & Berlin",
+    text: "Prix Univers des Arts (mai 2017) et galerie Carre d'artistes à Berlin. Deux consécrations la même année.",
   },
   {
-    year: "Le monde",
-    title: "De Paris à Singapour",
-    text: "Ses œuvres voyagent : Paris, Miami, Lisbonne, Berlin, Hong Kong, Singapour. Une cote qui s'installe, une signature qui traverse les frontières.",
+    year: "2019",
+    title: "Hong Kong & retour en Provence",
+    text: "Galerie Carre à Hong Kong, exposition au pôle culturel de Saint-Maximin-la-Sainte-Baume (septembre 2019) — et Paris, Cours Saint-Émilion.",
+  },
+  {
+    year: "2020",
+    title: "Entrée au musée Paul Bédu",
+    text: "Exposition à l'Espace Paul Bédu de Milly-la-Forêt (septembre–novembre 2020) : son travail entre dans la collection du musée. Galerie Calçada à Lisbonne la même année.",
+  },
+  {
+    year: "2022",
+    title: "Singapour & Malaisie",
+    text: "Galerie Carre d'artistes en Malaisie et Singapour ; Art et Vin au domaine Saint-Ferréol. Artprice enregistre ses ventes aux enchères (11 résultats en peinture).",
+  },
+  {
+    year: "2023",
+    title: "Musée Simon Sigal, Aups",
+    text: "Galerie Carre d'artistes à Metz et exposition au musée Simon Sigal d'Aups (Haut-Var) — la Provence reconnaît le sien.",
   },
   {
     year: "Aujourd'hui",
     title: "L'atelier de Barjols",
-    text: "Enraciné dans le Var (PACA), il continue d'explorer le geste, la matière et la couleur — et ouvre son atelier à ceux qui veulent une pièce sur mesure.",
+    text: "Enraciné dans le Var, il peint à l'atelier du 12 rue Pierre Curie, ouvre ses portes chaque été avec les artistes barjolais — et réalise des pièces sur mesure pour les collectionneurs d'ici et d'ailleurs.",
   },
 ];
 
@@ -177,8 +213,14 @@ export default async function ArtistPage() {
             </h2>
             <div className="mt-5 space-y-3 leading-relaxed text-white/70">
               <p>
-                Élève appliqué, David commence par les natures mortes, les portraits
-                et les nus, perfectionnant sa technique auprès de la peintre Nadine
+                Né en 1966, David a d'abord mené une autre vie — cadre en entreprise,
+                marié, trois enfants — avant de tout quitter à 50 ans pour se
+                consacrer entièrement à la peinture, un choix raconté dans un
+                reportage qui lui est consacré.
+              </p>
+              <p>
+                Élève appliqué, il commence par les natures mortes, les portraits et
+                les nus, perfectionnant sa technique auprès de la peintre Nadine
                 Foster. Puis vient la découverte de Jackson Pollock — une révélation
                 qui libère son geste et l'oriente vers un art de la couleur pure et de
                 la matière.
@@ -188,12 +230,14 @@ export default async function ArtistPage() {
                 Saint-Maximin-la-Sainte-Baume et Barjols (Var). Inspiré par les
                 affiches déchirées du métro parisien, il fait entrer dans ses toiles
                 les icônes de la pop culture — super-héros, stars, bandes dessinées —
-                découpées, superposées, peintes à la main.
+                découpées, superposées, peintes à la main, avec, plus récemment, des
+                vinyles et des affiches d'avant-guerre.
               </p>
               <p>
-                Prix Univers des Arts 2017, ses œuvres exposent de Paris à Miami,
-                Berlin, Hong Kong et Singapour. Aujourd'hui, il continue de peindre à
-                l'atelier : chaque toile est unique, signée, et attend son
+                Prix Univers des Arts 2017, exposé de Paris à Miami, Berlin, Hong Kong
+                et Singapour, présent dans les collections des musées Paul Bédu
+                (Milly-la-Forêt) et Simon Sigal (Aups). Aujourd'hui, il continue de
+                peindre à l'atelier : chaque toile est unique, signée, et attend son
                 collectionneur.
               </p>
             </div>
@@ -251,6 +295,66 @@ export default async function ArtistPage() {
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Presse & reconnaissance */}
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+        <Reveal>
+          <p className="eyebrow">Presse & reconnaissance</p>
+          <h2 className="display-2 mt-4">
+            Ils parlent de <span className="accent-text">lui</span>
+          </h2>
+        </Reveal>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            {
+              k: "Figaro Magazine",
+              d: "Article — novembre 2012",
+              href: null,
+            },
+            {
+              k: "Univers des Arts",
+              d: "Revue d'art — mai 2013",
+              href: null,
+            },
+            {
+              k: "Reportage vidéo",
+              d: "« Tout quitter pour devenir artiste à 50 ans »",
+              href: "https://www.youtube.com/watch?v=A9T8cVTbFG8",
+            },
+            {
+              k: "Carré d'artistes",
+              d: "Visite d'atelier filmée dans son atelier",
+              href: "https://www.carredartistes.com/fr-be/visite-atelier-drioton",
+            },
+            {
+              k: "Cotation i-CAC",
+              d: "Cotation officielle de l'artiste",
+              href: "https://www.i-cac.fr/artiste/drioton-david/cotation.html",
+            },
+            {
+              k: "Artprice",
+              d: "11 résultats en ventes publiques",
+              href: "https://fr.artprice.com/artiste/592681/david-drioton",
+            },
+          ].map((p, i) => (
+            <Reveal key={p.k} delay={0.06 * (i % 3)} className="card-glass rounded-2xl p-5">
+              <NewspaperIcon className="h-5 w-5 text-[var(--amber)]" />
+              <h3 className="mt-2.5 font-bold">{p.k}</h3>
+              <p className="mt-1 text-sm text-white/60">{p.d}</p>
+              {p.href ? (
+                <a
+                  href={p.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2.5 inline-block text-xs font-semibold text-[var(--magenta)] hover:underline"
+                >
+                  Voir la source →
+                </a>
+              ) : null}
+            </Reveal>
+          ))}
         </div>
       </section>
 

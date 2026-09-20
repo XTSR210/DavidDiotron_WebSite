@@ -78,7 +78,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               image: `${site.url}/artworks/art-01.jpg`,
               address: {
                 "@type": "PostalAddress",
+                streetAddress: "12 rue Pierre Curie",
                 addressLocality: "Barjols",
+                postalCode: "83670",
                 addressRegion: "Var (PACA)",
                 addressCountry: "FR",
               },

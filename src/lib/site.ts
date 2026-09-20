@@ -11,7 +11,10 @@ export const site = {
   /** URL publique du site (utilisée pour le SEO / Open Graph). */
   url: "https://xtsr210.github.io/DavidDiotron_WebSite",
   location: "Barjols, Var (PACA)",
-  address: "Atelier de Barjols — 83670 Barjols, Var (PACA), France",
+  /** Adresse réelle de l'atelier (bio Instagram + Saatchi Art). */
+  address: "12 rue Pierre Curie — 83670 Barjols, Var (PACA)",
+  mapsUrl:
+    "https://www.google.com/maps/search/?api=1&query=12+rue+Pierre+Curie+83670+Barjols",
 
   // ── À compléter ───────────────────────────────────────────────
   phone: "+33 6 00 00 00 00", // TODO: vrai numéro de l'atelier

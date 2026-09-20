@@ -212,6 +212,19 @@ export function WalletIcon({ className }: IconProps) {
   );
 }
 
+/** Newspaper — press coverage, articles. */
+export function NewspaperIcon({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0V7" />
+      <path d="M12 6.5h6" />
+      <path d="M12 10.5h6" />
+      <path d="M12 15h6" />
+      <path d="M4 6.5h2" />
+    </Svg>
+  );
+}
+
 /** Clock — opening by appointment, response times. */
 export function ClockIcon({ className }: IconProps) {
   return (

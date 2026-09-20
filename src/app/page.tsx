@@ -210,9 +210,9 @@ export default async function HomePage() {
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">
             {[
               { k: "2017", v: "Prix Univers des Arts" },
-              { k: "3", v: "continents exposés — Paris, Miami, Singapour…" },
-              { k: "100 %", v: "peint à la main, pièces uniques" },
-              { k: "i-CAC", v: "cotation officielle de l'artiste" },
+              { k: "8 pays", v: "exposés — Paris, Miami, Berlin, Hong Kong, Singapour…" },
+              { k: "2 musées", v: "collections — Paul Bédu (2020) · Aups (2023)" },
+              { k: "i-CAC", v: "cotation officielle · ventes aux enchères Artprice" },
             ].map((f, i) => (
               <Reveal key={f.k} delay={0.1 + i * 0.08} className="card-glass rounded-2xl p-5">
                 <p className="accent-text text-3xl font-black tracking-tight">{f.k}</p>

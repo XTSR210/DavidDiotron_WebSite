@@ -179,7 +179,7 @@ export default function RendezVousPage() {
             </div>
           </dl>
           <a
-            href="https://www.google.com/maps/search/?api=1&query=Barjols%2083670%20Var%20France"
+            href={site.mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-accent mt-6 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold"
@@ -211,19 +211,27 @@ export default function RendezVousPage() {
           </div>
         ) : (
           <Reveal delay={0.08}>
-            <p className="mt-5 max-w-xl leading-relaxed text-white/55">
-              Les prochaines dates (Portes Ouvertes des artistes de Barjols,
-              salons, expositions) sont annoncées en premier sur{" "}
-              <a
-                href={site.social[0].href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-[var(--magenta)] hover:underline"
-              >
-                Instagram {site.social[0].handle}
-              </a>
-              . Pour être sûr d'une visite, prenez rendez-vous ci-dessus.
-            </p>
+            <div className="card-glass mt-6 max-w-3xl rounded-2xl p-6">
+              <p className="leading-relaxed text-white/70">
+                <strong className="text-white">Chaque été, les artistes de Barjols ouvrent leurs ateliers</strong>{" "}
+                le temps d'un week-end de mi-août — 17 h à 21 h, accès libre, rue des
+                Tanneurs et rue Pierre Curie. L'édition 2026 (15 & 16 août) s'est
+                achevée par une démonstration de peinture en direct de David.
+              </p>
+              <p className="mt-3 leading-relaxed text-white/55">
+                Les prochaines dates (Portes Ouvertes 2027, salons, expositions)
+                sont annoncées en premier sur{" "}
+                <a
+                  href={site.social[0].href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-[var(--magenta)] hover:underline"
+                >
+                  Instagram {site.social[0].handle}
+                </a>
+                . Pour être sûr d'une visite, prenez rendez-vous ci-dessus.
+              </p>
+            </div>
           </Reveal>
         )}
       </section>
