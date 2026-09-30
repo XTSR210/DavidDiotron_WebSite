@@ -15,11 +15,24 @@ import { imageRatio } from "./image-size";
 const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "artworks.json");
 
+/** Vignette produite par scripts/make-thumbs.mjs, si elle existe pour cette image. */
+async function thumbFor(image: string): Promise<string | undefined> {
+  if (!image.startsWith("/artworks/")) return undefined;
+  const thumb = `/artworks/wall/${path.parse(image).name}.webp`;
+  try {
+    await fs.access(path.join(process.cwd(), "public", thumb));
+    return assetPath(thumb);
+  } catch {
+    return undefined;
+  }
+}
+
 async function hang(list: Artwork[]): Promise<Artwork[]> {
   return Promise.all(
     list.map(async (a) => ({
       ...a,
       ratio: await imageRatio(a.image),
+      thumb: await thumbFor(a.image),
       image: assetPath(a.image),
     }))
   );
@@ -38,7 +51,7 @@ export async function readArtworks(): Promise<Artwork[]> {
 
 export async function writeArtworks(artworks: Artwork[]): Promise<void> {
   await fs.mkdir(DATA_DIR, { recursive: true });
-  // `ratio` est recalculé à chaque build : on ne l'enregistre pas.
-  const stored = artworks.map(({ ratio: _ratio, ...a }) => a);
+  // `ratio` et `thumb` sont recalculés à chaque build : on ne les enregistre pas.
+  const stored = artworks.map(({ ratio: _ratio, thumb: _thumb, ...a }) => a);
   await fs.writeFile(DATA_FILE, `${JSON.stringify(stored, null, 2)}\n`, "utf8");
 }

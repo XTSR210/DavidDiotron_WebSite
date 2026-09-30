@@ -36,6 +36,7 @@ npm install
 npm run dev          # http://localhost:3000
 npm run typecheck    # à passer avant de livrer
 npx vitest run       # tests de la grille de prix
+npm run thumbs       # vignettes téléphone (lancé tout seul avant dev et build)
 npm run build        # export statique dans out/
 GITHUB_PAGES=true npm run build   # même build que la mise en ligne
 ```
@@ -157,6 +158,10 @@ CSS** à partir de `--p`. Deux modes : `pin` (scène épinglée en `sticky`) et
 7. **Images** : les toiles font 400 px de large. Ne pas les afficher beaucoup
    plus grandes (d'où des murs de nombreuses petites toiles plutôt qu'une
    seule image plein écran).
+   Sur téléphone (≤ 640 px), le mur et la bande chargent des vignettes WebP
+   de 280 px (`public/artworks/wall/`, générées par `scripts/make-thumbs.mjs`
+   avant chaque build, hors Git) ; `artwork.thumb` n'existe que si la
+   vignette a été produite, sinon l'image d'origine sert partout.
 8. **Prix** : l'estimation vient de la grille i-CAC (`lib/pricing.ts`) ; elle
    est toujours présentée comme indicative, le devis ferme vient de l'atelier.
 9. `/admin` : mot de passe et logique inchangés ; ne pas renommer les
@@ -204,3 +209,14 @@ Vérifié : typecheck, 7 tests Vitest, build statique (avec et sans
 débordement, mouvement réduit, menu, visionneuse, simulateur, envoi du
 formulaire. L'ancien site est archivé dans `avant-refonte-2026-09-30.tar.gz`
 (hors Git).
+
+### 30 septembre 2026 — Optimisation après mesure
+
+Mesure Lighthouse du site en ligne avant correctifs : ordinateur 99 en
+performance, téléphone 89 (plus grande image affichée en 3,7 s, 1,3 Mo
+d'images), accessibilité 97, SEO 100. Corrigé : vignettes WebP pour le mur et
+la bande sur téléphone, priorité de chargement sur les premières toiles du
+mur, contraste du texte secondaire discret (`--fg-faint`), et
+`trailingSlash: true` (le préchargement du lien vers l'accueil demandait
+`/DavidDiotron_WebSite.txt`, introuvable sous GitHub Pages). Non corrigeable
+ici : la durée de cache, fixée à 10 minutes par GitHub Pages.

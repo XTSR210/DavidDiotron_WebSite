@@ -14,3 +14,6 @@ tsconfig.tsbuildinfo
 # Carte Graphify (régénérable) et archive de l'ancien site
 graphify-out/
 avant-refonte-*.tar.gz
+
+# Vignettes générées avant chaque build (scripts/make-thumbs.mjs)
+public/artworks/wall/

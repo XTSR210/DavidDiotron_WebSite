@@ -46,7 +46,7 @@
   --bg: var(--noir);
   --fg: var(--papier);
   --fg-soft: rgba(237, 235, 229, 0.7);
-  --fg-faint: rgba(237, 235, 229, 0.45);
+  --fg-faint: rgba(237, 235, 229, 0.62);
   --line: rgba(237, 235, 229, 0.18);
   --mark: var(--jaune);
   --btn-bg: var(--jaune);
@@ -127,7 +127,7 @@
     --bg: var(--noir);
     --fg: var(--papier);
     --fg-soft: rgba(237, 235, 229, 0.7);
-    --fg-faint: rgba(237, 235, 229, 0.45);
+    --fg-faint: rgba(237, 235, 229, 0.62);
     --line: rgba(237, 235, 229, 0.18);
     --mark: var(--jaune);
     --btn-bg: var(--jaune);
@@ -141,7 +141,7 @@
   .bloc-cyan {
     --fg: var(--noir);
     --fg-soft: rgba(11, 10, 12, 0.74);
-    --fg-faint: rgba(11, 10, 12, 0.55);
+    --fg-faint: rgba(11, 10, 12, 0.66);
     --line: rgba(11, 10, 12, 0.2);
     --btn-bg: var(--noir);
     --btn-fg: var(--papier);
@@ -657,6 +657,11 @@
   .hw-track {
     display: flex;
     flex-direction: column;
+  }
+
+  .hw-track picture,
+  .band-row picture {
+    display: contents;
   }
 
   .hw-track img {

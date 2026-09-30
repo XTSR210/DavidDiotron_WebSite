@@ -24,6 +24,8 @@ export interface Artwork {
   note?: string;
   /** Rapport largeur / hauteur de l'image, calculé au build (jamais enregistré). */
   ratio?: number;
+  /** Vignette légère (280 px) pour les scènes sur téléphone, si elle existe (build). */
+  thumb?: string;
 }
 
 /** A commission order placed from the order page. */

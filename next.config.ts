@@ -10,6 +10,9 @@ const basePath = isGithubPages ? "/DavidDiotron_WebSite" : "";
 const nextConfig: NextConfig = {
   // Export 100 % statique — compatible GitHub Pages (pas de serveur).
   output: "export",
+  // Chaque page devient <page>/index.html : les liens vers l'accueil restent
+  // valides sous le sous-dossier GitHub Pages (sinon 404 au préchargement).
+  trailingSlash: true,
   basePath,
   assetPrefix: isGithubPages ? "/DavidDiotron_WebSite/" : undefined,
   images: {

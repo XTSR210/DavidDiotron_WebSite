@@ -41,17 +41,22 @@ export default function HeroWall({ artworks }: { artworks: Artwork[] }) {
                 <div className="hw-track" style={{ "--dur": `${DURATIONS[c]}s` } as React.CSSProperties}>
                   {/* Liste doublée : la boucle repart sans couture à mi-hauteur. */}
                   {[...col, ...col].map((a, i) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={`${a.id}-${i}`}
-                      src={a.image}
-                      alt=""
-                      {...canvasSize(a)}
-                      // Chargement immédiat : le différé se déclenche mal sur un plan en 3D.
-                      loading="eager"
-                      decoding="async"
-                      draggable={false}
-                    />
+                    <picture key={`${a.id}-${i}`}>
+                      {/* Téléphone : vignette légère, suffisante pour des colonnes étroites. */}
+                      {a.thumb ? <source media="(max-width: 640px)" srcSet={a.thumb} type="image/webp" /> : null}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={a.image}
+                        alt=""
+                        {...canvasSize(a)}
+                        // Chargement immédiat : le différé se déclenche mal sur un plan en 3D.
+                        loading="eager"
+                        // Les premières toiles visibles passent avant le reste de la page.
+                        fetchPriority={i < 2 && c < 5 ? "high" : "auto"}
+                        decoding="async"
+                        draggable={false}
+                      />
+                    </picture>
                   ))}
                 </div>
               </div>
