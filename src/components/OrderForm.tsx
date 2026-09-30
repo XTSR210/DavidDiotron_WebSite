@@ -1,31 +1,40 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  MIN_CM,
-  formatDimensions,
-  formatEur,
-  quoteCommission,
-} from "@/lib/pricing";
+import { MIN_CM, formatDimensions, formatEur, quoteCommission } from "@/lib/pricing";
 import type { Artwork } from "@/lib/types";
-import { LeadTimeNote } from "@/components/commercial";
+import { WallPreview } from "@/components/WallPreview";
 import { CanvasCheckIcon, MailIcon, WhatsAppIcon } from "@/components/icons";
 import { site, waLink } from "@/lib/site";
 
+const MAX_CM = 300;
+
+/** Lit une dimension passée dans l'adresse (?w=100&h=80), bornée aux limites de l'atelier. */
+function paramCm(value: string | null, fallback: number): number {
+  const n = Math.floor(Number(value));
+  return Number.isFinite(n) && n > 0 ? Math.min(MAX_CM, Math.max(MIN_CM, n)) : fallback;
+}
+
 function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
   const params = useSearchParams();
-  const initialRef = params.get("ref") ?? "";
 
-  const [referenceId, setReferenceId] = useState(initialRef);
+  const [referenceId, setReferenceId] = useState(params.get("ref") ?? "");
   const [title, setTitle] = useState("");
-  const [widthCm, setWidthCm] = useState(60);
-  const [heightCm, setHeightCm] = useState(80);
+  const [widthCm, setWidthCm] = useState(() => paramCm(params.get("w"), 60));
+  const [heightCm, setHeightCm] = useState(() => paramCm(params.get("h"), 80));
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [sentVia, setSentVia] = useState<"email" | "whatsapp" | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Une fois la demande partie, la confirmation est amenée à l'écran
+  // (sur téléphone, le bouton d'envoi est tout en bas du formulaire).
+  const doneRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (sentVia) doneRef.current?.scrollIntoView({ block: "center" });
+  }, [sentVia]);
 
   const quote = useMemo(() => quoteCommission(widthCm, heightCm), [widthCm, heightCm]);
   const reference = artworks.find((a) => a.id === referenceId);
@@ -45,6 +54,7 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
     `Email : ${email}`,
     ...(message ? [`Message : ${message}`] : []),
   ].join("\n");
+  const mailHref = `mailto:${site.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
   function openLink(href: string) {
     // Ouvre le client mail / WhatsApp dans une fenêtre séparée, SANS
@@ -61,7 +71,7 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
 
   function sendEmail(e: React.FormEvent) {
     e.preventDefault();
-    openLink(`mailto:${site.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+    openLink(mailHref);
     setSentVia("email");
   }
 
@@ -76,7 +86,7 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
       await navigator.clipboard.writeText(text);
       setCopied(true);
     } catch {
-      // Repli universel (navigateurs/contexts sans Clipboard API) :
+      // Repli universel (navigateurs/contextes sans Clipboard API) :
       // sélection via un textarea éphémère + execCommand.
       try {
         const ta = document.createElement("textarea");
@@ -97,260 +107,196 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
 
   if (sentVia) {
     return (
-      <div className="card-glass rounded-2xl p-8 text-center">
-        <CanvasCheckIcon className="mx-auto h-14 w-14 text-[var(--teal)]" />
-        <h2 className="mt-3 text-2xl font-bold">Demande de devis prête !</h2>
-        <p className="mt-2 text-white/70">
-          {formatDimensions(quote.widthCm, quote.heightCm)} ·{" "}
-          <span className="accent-amber font-semibold">≈ {formatEur(quote.priceEur)}</span>{" "}
-          <span className="text-sm text-white/50">(estimation indicative)</span>
+      <div ref={doneRef} className="panel mx-auto max-w-2xl scroll-mt-28 text-center">
+        <CanvasCheckIcon className="mx-auto h-14 w-14 text-[var(--jaune)]" />
+        <h2 className="poster t-md mt-4">Votre demande est prête</h2>
+        <p className="soft mt-3">
+          {formatDimensions(quote.widthCm, quote.heightCm)}, estimation indicative{" "}
+          <span className="font-bold text-[var(--jaune)]">{formatEur(quote.priceEur)}</span>.
         </p>
-        <p className="mt-3 text-sm leading-relaxed text-white/60">
+        <p className="soft mt-3">
           {sentVia === "email"
-            ? "Votre messagerie s'est ouverte avec le récapitulatif pré-rempli — envoyez-le à l'atelier."
-            : "WhatsApp s'est ouvert avec votre demande pré-remplie — envoyez le message à l'atelier."}{" "}
-          David vous répond <span className="font-semibold text-white/85">sous 48 h</span> et{" "}
-          <span className="font-semibold text-white/85">échange avec vous directement</span>{" "}
-          jusqu'à un <span className="font-semibold text-[var(--amber)]">devis ferme : le prix est fixe et garanti</span>.
+            ? "Votre messagerie s'est ouverte avec le récapitulatif : il reste à l'envoyer."
+            : "WhatsApp s'est ouvert avec votre demande : il reste à envoyer le message."}{" "}
+          David vous répond sous 48 h et fixe avec vous un devis ferme. Aucun paiement à cette
+          étape.
         </p>
-        <div className="mt-5 flex flex-wrap justify-center gap-3">
-          <button
-            type="button"
-            onClick={sendWhatsApp}
-            className="flex items-center gap-2 rounded-lg border border-[var(--teal)]/50 px-5 py-2.5 font-semibold text-[var(--teal)] transition hover:bg-[var(--teal)]/10"
-          >
+        <div className="mt-7 flex flex-wrap justify-center gap-x-4 gap-y-4">
+          <button type="button" onClick={sendWhatsApp} className="btn btn-sm btn-wa">
             <WhatsAppIcon className="h-4 w-4" />
             {sentVia === "whatsapp" ? "Rouvrir WhatsApp" : "Envoyer sur WhatsApp"}
           </button>
-          <a
-            href={`mailto:${site.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
-            className="btn-accent flex items-center gap-2 rounded-lg px-5 py-2.5 font-semibold"
-          >
+          <a href={mailHref} className="btn btn-sm">
             <MailIcon className="h-4 w-4" />
-            {sentVia === "email" ? "Réouvrir l'email" : "Envoyer par email"}
+            {sentVia === "email" ? "Rouvrir l'email" : "Envoyer par email"}
           </a>
-          <button
-            type="button"
-            onClick={copyOrder}
-            className="rounded-lg border border-white/20 px-5 py-2.5 font-semibold text-white/85 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
-          >
-            {copied ? "Copié ✓" : "Copier le récapitulatif"}
+          <button type="button" onClick={copyOrder} className="btn btn-sm btn-ghost">
+            {copied ? "Récapitulatif copié" : "Copier le récapitulatif"}
           </button>
         </div>
-        {copied ? (
-          <p className="mt-3 text-xs text-emerald-400">
-            Récapitulatif copié ! Collez-le dans un email à {site.email}, sur WhatsApp ou en message Instagram.
-          </p>
-        ) : null}
-        <p className="mt-4 text-xs text-white/40">
-          Aucun paiement à cette étape : vous validez ensemble le devis (prix fixe),
-          puis un acompte lance la toile.
+        <p className="faint small mt-5" aria-live="polite">
+          {copied
+            ? `Collez-le dans un email à ${site.email}, sur WhatsApp ou en message Instagram.`
+            : "Rien ne s'est ouvert ? Copiez le récapitulatif et envoyez-le par le canal de votre choix."}
         </p>
       </div>
     );
   }
 
-  const inputCls =
-    "w-full rounded-lg border border-white/15 bg-[var(--ink-soft)] px-3 py-2.5 text-sm outline-none focus:border-[var(--magenta)]";
+  const dimension = (
+    label: string,
+    value: number,
+    set: React.Dispatch<React.SetStateAction<number>>
+  ) => (
+    <div className="flex-1">
+      <label className="field-label">
+        {label} <span className="faint font-normal">(cm)</span>
+        <input
+          type="number"
+          inputMode="numeric"
+          min={MIN_CM}
+          max={MAX_CM}
+          step={1}
+          value={value || ""}
+          onChange={(e) => set(Math.max(0, Number(e.target.value) || 0))}
+          onBlur={() => set((s) => Math.min(MAX_CM, Math.max(MIN_CM, Math.floor(s) || MIN_CM)))}
+          className="field mt-2 font-bold tabular-nums"
+        />
+      </label>
+    </div>
+  );
 
   return (
-    <form onSubmit={sendEmail} className="grid gap-6 lg:grid-cols-[1fr_360px]">
-      <div className="card-glass space-y-5 rounded-2xl p-6">
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold">Style de référence</label>
-          <select
-            value={referenceId}
-            onChange={(e) => setReferenceId(e.target.value)}
-            className={inputCls}
-          >
-            <option value="">— Aucune référence, création libre —</option>
+    <form onSubmit={sendEmail} className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-14">
+      <div className="space-y-9">
+        <fieldset className="min-w-0">
+          <legend className="field-label">Une toile de référence</legend>
+          <p className="soft small mb-3">
+            Choisissez celle dont l'esprit vous parle, ou partez d'une page blanche.
+          </p>
+          <div className="ref-strip">
+            <button
+              type="button"
+              className="ref-tile p-1.5"
+              aria-pressed={referenceId === ""}
+              onClick={() => setReferenceId("")}
+            >
+              Création libre
+            </button>
             {artworks.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.title}
-              </option>
+              <button
+                key={a.id}
+                type="button"
+                className="ref-tile"
+                aria-pressed={referenceId === a.id}
+                aria-label={a.title}
+                title={a.title}
+                onClick={() => setReferenceId(a.id)}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={a.image} alt="" loading="lazy" decoding="async" />
+              </button>
             ))}
-          </select>
-          {reference ? (
-            <div className="mt-3 flex items-center gap-3 rounded-xl bg-white/5 p-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={reference.image}
-                alt={reference.title}
-                className="h-24 w-16 rounded-lg object-cover"
-              />
-              <div className="text-sm text-white/70">
-                <p className="font-semibold text-white">{reference.title}</p>
-                <p className="text-xs">{reference.technique}</p>
-              </div>
-            </div>
-          ) : null}
-        </div>
+          </div>
+          <p className="small mt-1" aria-live="polite">
+            <span className="soft">Référence : </span>
+            <span className="font-bold">{reference?.title ?? "création libre"}</span>
+          </p>
+        </fieldset>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold">Idée / sujet de la pièce</label>
+        <label className="field-label">
+          Votre idée, le sujet de la toile
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            placeholder="Ex. « Taureau pop art pour le salon »"
-            className={inputCls}
+            placeholder="Un taureau pop art pour le salon"
+            className="field mt-2 font-normal"
           />
-        </div>
+        </label>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold">
-            Taille de l'œuvre — au centimètre carré
-          </label>
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <label className="mb-1 block text-xs text-white/50">
-                Largeur (cm) · min. {MIN_CM}
-              </label>
-              <input
-                type="number"
-                min={MIN_CM}
-                max={300}
-                step={1}
-                value={widthCm}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setWidthCm(Number.isFinite(v) ? Math.max(0, v) : 0);
-                }}
-                onBlur={() => setWidthCm((s) => Math.max(MIN_CM, Math.floor(s) || MIN_CM))}
-                className={inputCls}
-              />
-            </div>
-            <span className="pt-4 text-white/40">×</span>
-            <div className="flex-1">
-              <label className="mb-1 block text-xs text-white/50">
-                Hauteur (cm) · min. {MIN_CM}
-              </label>
-              <input
-                type="number"
-                min={MIN_CM}
-                max={300}
-                step={1}
-                value={heightCm}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setHeightCm(Number.isFinite(v) ? Math.max(0, v) : 0);
-                }}
-                onBlur={() => setHeightCm((s) => Math.max(MIN_CM, Math.floor(s) || MIN_CM))}
-                className={inputCls}
-              />
-            </div>
+        <fieldset className="min-w-0">
+          <legend className="field-label">Le format</legend>
+          <div className="flex items-end gap-3">
+            {dimension("Largeur", widthCm, setWidthCm)}
+            <span className="faint pb-3 text-xl" aria-hidden="true">
+              ×
+            </span>
+            {dimension("Hauteur", heightCm, setHeightCm)}
           </div>
-          <p className="mt-2 text-xs text-white/50">
-            Minimum réalisable :{" "}
-            <span className="font-semibold text-white/85">
-              {MIN_CM} × {MIN_CM} cm
-            </span>{" "}
-            — une toile plus petite n'existe pas à l'atelier. Surface :{" "}
-            <span className="text-white/85">{quote.areaCm2.toLocaleString("fr-FR")} cm²</span>.
+          <p className="soft small mt-3">
+            De {MIN_CM} à {MAX_CM} cm par côté. Surface : {quote.areaCm2.toLocaleString("fr-FR")} cm².
+            Format i-CAC le plus proche : {quote.refLabel}, {formatEur(quote.refPriceEur)}.
           </p>
-          <p className="mt-1.5 text-xs text-white/50">
-            Tarif établi selon la cote i-CAC de l'artiste — repère :{" "}
-            <span className="text-white/85">{quote.refLabel}</span> ≈{" "}
-            <span className="font-semibold text-white/85">{formatEur(quote.refPriceEur)}</span>
-          </p>
-          <p className="mt-1.5 text-xs text-white/50">
-            <span className="font-semibold text-white/70">Prix approximatif</span> :
-            estimation indicative — après échanges avec l'atelier, vous recevez un{" "}
-            <span className="font-semibold text-white/70">devis ferme au tarif fixe</span>.
-          </p>
-        </div>
+        </fieldset>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">Votre nom</label>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <label className="field-label">
+            Votre nom
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className={inputCls}
+              autoComplete="name"
+              className="field mt-2 font-normal"
             />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">Email</label>
+          </label>
+          <label className="field-label">
+            Votre email
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className={inputCls}
+              autoComplete="email"
+              className="field mt-2 font-normal"
             />
-          </div>
+          </label>
         </div>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold">
-            Message à l'artiste (optionnel)
-          </label>
+        <label className="field-label">
+          Un mot pour David <span className="faint font-normal">(facultatif)</span>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            rows={3}
+            rows={4}
             placeholder="Ambiance, couleurs, délai souhaité, budget…"
-            className={inputCls}
+            className="field mt-2 font-normal"
           />
-        </div>
+        </label>
       </div>
 
-      <aside className="card-glass h-fit rounded-2xl p-6 lg:sticky lg:top-20">
-        <h2 className="text-lg font-bold">Votre demande de devis</h2>
-        <dl className="mt-4 space-y-2 text-sm">
-          <div className="flex justify-between">
-            <dt className="text-white/60">Surface</dt>
-            <dd>{quote.areaCm2.toLocaleString("fr-FR")} cm²</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-white/60">Dimensions</dt>
-            <dd>{formatDimensions(quote.widthCm, quote.heightCm)}</dd>
-          </div>
-          <div className="flex items-baseline justify-between border-t border-white/10 pt-3 text-base font-bold">
-            <dt>Estimation*</dt>
-            <dd className="accent-amber">≈ {formatEur(quote.priceEur)}</dd>
-          </div>
-        </dl>
-        <p className="mt-2 text-xs leading-relaxed text-white/45">
-          *Prix approximatif, à titre indicatif — le <strong className="text-white/70">devis ferme</strong>{" "}
-          (tarif fixe) est arrêté ensemble avec l'atelier avant toute commande.
-        </p>
-
-        <div className="mt-5 space-y-2.5">
-          <button type="submit" className="btn-accent flex w-full items-center justify-center gap-2 rounded-lg py-3 font-bold">
-            <MailIcon className="h-4 w-4" />
-            Envoyer par email
-          </button>
-          <button
-            type="button"
-            onClick={sendWhatsApp}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--teal)]/60 py-3 font-bold text-[var(--teal)] transition hover:bg-[var(--teal)]/10"
-          >
-            <WhatsAppIcon className="h-5 w-5" />
-            Discuter sur WhatsApp
-          </button>
-          <button
-            type="button"
-            onClick={copyOrder}
-            className="w-full rounded-lg border border-white/15 py-2 text-xs font-semibold text-white/60 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
-          >
-            {copied ? "Copié ✓" : "Copier le récapitulatif"}
-          </button>
-        </div>
-        {copied ? (
-          <p className="mt-2 text-xs text-emerald-400">
-            Copié ! Collez-le dans un email, sur WhatsApp ou Instagram.
+      <aside className="lg:sticky lg:top-28">
+        <WallPreview widthCm={quote.widthCm} heightCm={quote.heightCm} image={reference?.image} />
+        <div className="panel border-t-0">
+          <p className="soft small">Estimation pour {formatDimensions(quote.widthCm, quote.heightCm)}</p>
+          <p className="poster price mt-1" aria-live="polite">
+            {formatEur(quote.priceEur).replace(",00", "")}
           </p>
-        ) : null}
+          <p className="soft small mt-2">
+            Prix indicatif, d'après la cote i-CAC. Le devis ferme est fixé avec l'atelier avant
+            toute commande.
+          </p>
 
-        <div className="mt-4">
-          <LeadTimeNote />
+          <div className="mt-6 grid gap-4">
+            <button type="submit" className="btn w-full">
+              <MailIcon className="h-5 w-5" />
+              Envoyer par email
+            </button>
+            <button type="button" onClick={sendWhatsApp} className="btn btn-wa w-full">
+              <WhatsAppIcon className="h-5 w-5" />
+              Envoyer sur WhatsApp
+            </button>
+            <button type="button" onClick={copyOrder} className="link small justify-self-center">
+              {copied ? "Récapitulatif copié" : "Copier le récapitulatif"}
+            </button>
+          </div>
+
+          <p className="small soft mt-6 border-l-4 border-[var(--cyan)] pl-4">
+            Délai habituel : <span className="font-bold text-[var(--fg)]">3 à 6 semaines</span>{" "}
+            après validation du devis. Acompte au lancement, solde à la livraison.
+          </p>
         </div>
-        <p className="mt-3 text-xs text-white/40">
-          Devis gratuit, sans engagement. Le moyen de paiement (virement, chèque ou
-          retrait à l'atelier de Barjols) est convenu ensemble.
-        </p>
       </aside>
     </form>
   );
@@ -358,7 +304,7 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
 
 export function OrderForm({ artworks }: { artworks: Artwork[] }) {
   return (
-    <Suspense fallback={<p className="text-white/50">Chargement…</p>}>
+    <Suspense fallback={<p className="soft">Chargement du formulaire…</p>}>
       <OrderFormInner artworks={artworks} />
     </Suspense>
   );

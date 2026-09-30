@@ -1,91 +1,84 @@
 import Link from "next/link";
-import { Reveal } from "@/components/Reveal";
 import {
   AwardIcon,
-  CalendarIcon,
-  ChatIcon,
   ExpandIcon,
   HandIcon,
-  HandshakeIcon,
-  HeartIcon,
+  InstagramIcon,
   PackageIcon,
   ScrollIcon,
-  StarIcon,
   WalletIcon,
   WhatsAppIcon,
 } from "@/components/icons";
+import CanvasFan from "@/components/scenes/CanvasFan";
+import { TornEdge } from "@/components/TornEdge";
+import { readArtworks } from "@/lib/artworks";
 import { site, waLink } from "@/lib/site";
+import { testimonials } from "@/lib/testimonials";
 
 /* ------------------------------------------------------------------ */
-/* BANDEAU CTA — rappel à l'action répété en bas de chaque page.       */
+/* APPEL FINAL — aplat magenta et éventail de toiles, en bas de page.  */
 /* ------------------------------------------------------------------ */
 
-export function CtaBanner({
+export async function CtaBanner({
   title = "Une toile qui vous ressemble, peinte pour vous.",
-  text = "Décrivez votre projet en deux minutes — David vous répond avec un devis ferme, sans engagement.",
-  primary = { href: "/order", label: "Lancer mon projet" },
-  secondary = { href: "/gallery", label: "Voir les œuvres" },
+  text = "Décrivez votre projet en deux minutes. David vous répond en personne, avec un devis ferme et sans engagement.",
+  primary = { href: "/order", label: "Commander une toile" },
+  secondary = { href: "/gallery", label: "Voir la galerie" },
 }: {
   title?: string;
   text?: string;
   primary?: { href: string; label: string };
   secondary?: { href: string; label: string };
 }) {
+  const artworks = await readArtworks();
+  // Cinq toiles prises à intervalles réguliers, pour un éventail varié.
+  const fan = [0, 4, 8, 12, 16].map((i) => artworks[i % artworks.length]);
+
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-      <Reveal>
-        <div className="cta-banner relative overflow-hidden rounded-3xl px-6 py-12 text-center sm:px-10">
-          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.14]">
-            <div className="absolute -left-16 -top-16 h-64 w-64 rounded-full bg-[var(--magenta)] blur-3xl" />
-            <div className="absolute -bottom-20 -right-10 h-64 w-64 rounded-full bg-[var(--amber)] blur-3xl" />
-          </div>
-          <p className="eyebrow justify-center">Commande sur mesure</p>
-          <h2 className="display-2 mx-auto mt-4 max-w-2xl">{title}</h2>
-          <p className="mx-auto mt-4 max-w-xl leading-relaxed text-white/70">{text}</p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link href={primary.href} className="btn-accent rounded-lg px-8 py-3.5 font-bold">
-              {primary.label}
-            </Link>
-            <Link
-              href={secondary.href}
-              className="rounded-lg border border-white/25 px-7 py-3.5 font-semibold text-white/85 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
-            >
-              {secondary.label}
-            </Link>
-          </div>
-          <p className="mt-5 text-xs text-white/45">
-            Réponse sous 48 h · devis gratuit · tarif fixe une fois le devis validé
-          </p>
+    <section className="bloc bloc-magenta halftone [clip-path:inset(-4rem_0_0_0)] pt-[clamp(4.5rem,11vw,9rem)]">
+      <TornEdge seed={11} />
+      <div className="wrap relative text-center">
+        <h2 className="poster t-xl mx-auto max-w-5xl">{title}</h2>
+        <p className="lead mx-auto mt-6 max-w-xl">{text}</p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-4">
+          <Link href={primary.href} className="btn">
+            {primary.label}
+          </Link>
+          <Link href={secondary.href} className="btn btn-ghost">
+            {secondary.label}
+          </Link>
         </div>
-      </Reveal>
+        <p className="small mt-6">Réponse sous 48 h. Devis gratuit. Prix fixe une fois le devis validé.</p>
+        <CanvasFan artworks={fan} />
+      </div>
     </section>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* GARANTIES — les six raisons d'acheter l'esprit tranquille.          */
+/* GARANTIES — six raisons d'acheter l'esprit tranquille.              */
 /* ------------------------------------------------------------------ */
 
 const guarantees = [
   {
     icon: HandIcon,
-    title: "100 % fait main",
+    title: "Peint à la main",
     text: "Chaque toile est peinte à l'atelier de Barjols. Pièce unique, jamais reproduite.",
   },
   {
     icon: ScrollIcon,
     title: "Certificat d'authenticité",
-    text: "Chaque œuvre est signée et accompagnée de son certificat — valeur sûre à la revente.",
+    text: "Chaque œuvre est signée et livrée avec son certificat.",
   },
   {
     icon: ExpandIcon,
-    title: "Sur mesure au cm près",
+    title: "Sur mesure, au centimètre",
     text: "Vous choisissez les dimensions exactes pour votre salon, votre bureau, votre hôtel.",
   },
   {
     icon: PackageIcon,
-    title: "Emballage musée & livraison",
-    text: "Toile protégée, coin renforcé, suivi — en France et à l'international.",
+    title: "Emballage et livraison suivie",
+    text: "Toile protégée, coins renforcés, suivi. En France et à l'international.",
   },
   {
     icon: WalletIcon,
@@ -95,122 +88,56 @@ const guarantees = [
   {
     icon: AwardIcon,
     title: "Artiste coté i-CAC",
-    text: "Cotation officielle et prix Univers des Arts 2017 : vous achetez une valeur reconnue.",
+    text: "Cotation officielle et prix Univers des Arts 2017 : une valeur reconnue.",
   },
 ];
 
 export function Guarantees() {
   return (
-    <section className="border-y border-white/10 bg-white/[0.03]">
-      <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-        <Reveal>
-          <p className="eyebrow">Pourquoi acheter ici</p>
-          <h2 className="display-2 mt-4 max-w-2xl">
-            Acheter une œuvre, <span className="accent-text">l'esprit tranquille</span>
-          </h2>
-        </Reveal>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {guarantees.map((g, i) => (
-            <Reveal
-              key={g.title}
-              delay={0.06 * (i % 3)}
-              className="card-glass group rounded-2xl p-6 transition hover:border-[var(--magenta)]/40"
-            >
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.06] text-[var(--amber)] transition group-hover:scale-110 group-hover:text-[var(--magenta)]">
-                <g.icon className="h-6 w-6" />
-              </span>
-              <h3 className="mt-4 font-bold">{g.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-white/60">{g.text}</p>
-            </Reveal>
-          ))}
-        </div>
-      </div>
-    </section>
+    <>
+      <h2 className="poster t-lg max-w-3xl">Acheter une œuvre, l'esprit tranquille.</h2>
+      <ul className="grid-points mt-12">
+        {guarantees.map((g) => (
+          <li key={g.title} className="point">
+            <g.icon className="point-icon" />
+            <h3 className="poster t-sm mt-4">{g.title}</h3>
+            <p className="soft mt-2">{g.text}</p>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* PREUVE SOCIALE — avis collectionneurs (visuals + étoiles).          */
+/* AVIS — paroles de collectionneurs (lib/testimonials.ts).            */
+/* Liste vide : rien n'est affiché.                                    */
 /* ------------------------------------------------------------------ */
 
-const testimonials = [
-  {
-    stars: 5,
-    quote:
-      "La toile a pris tout le salon. David a peint exactement l'ambiance que je voulais — et il est venu la livrer lui-même.",
-    author: "Céline M.",
-    place: "Salon-de-Provence",
-  },
-  {
-    stars: 5,
-    quote:
-      "Vu son travail à la Portes Ouvertes de Barjols, commandé une pièce de 120 × 80 pour notre restaurant. Les clients la photographient tous les soirs.",
-    author: "Karim B.",
-    place: "Restaurant, Toulon",
-  },
-  {
-    stars: 5,
-    quote:
-      "Un vrai échange, du croquis au vernis final. On voit l'artiste travailler sur Instagram pendant que la toile se fait. Rare et précieux.",
-    author: "Julien R.",
-    place: "Collectionneur, Paris",
-  },
-];
+export const hasTestimonials = testimonials.length > 0;
 
 export function Testimonials() {
+  if (!hasTestimonials) return null;
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-      <Reveal>
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <p className="eyebrow">Ils ont acquis une pièce</p>
-            <h2 className="display-2 mt-4 max-w-xl">
-              Des collectionneurs, <span className="accent-amber">de la Provence au monde</span>
-            </h2>
-          </div>
-          <p className="flex items-center gap-2 text-sm text-white/55">
-            <span className="flex text-[var(--amber)]" aria-hidden>
-              {[...Array(5)].map((_, i) => (
-                <StarIcon key={i} className="h-4 w-4" />
-              ))}
-            </span>
-            5 / 5 — avis clients de l'atelier
-          </p>
-        </div>
-      </Reveal>
-      <div className="mt-10 grid gap-4 md:grid-cols-3">
-        {testimonials.map((t, i) => (
-          <Reveal key={t.author} delay={0.08 * i} className="card-glass relative rounded-2xl p-6">
-            <HeartIcon
-              className="absolute right-5 top-5 h-5 w-5 text-[var(--magenta)]/40"
-              aria-hidden
-            />
-            <span className="flex text-[var(--amber)]" aria-label={`${t.stars} étoiles sur 5`}>
-              {[...Array(t.stars)].map((_, j) => (
-                <StarIcon key={j} className="h-4 w-4" />
-              ))}
-            </span>
-            <blockquote className="mt-4 text-sm leading-relaxed text-white/80">
-              « {t.quote} »
-            </blockquote>
-            <figcaption className="mt-4 border-t border-white/10 pt-3 text-xs text-white/50">
-              <span className="font-bold text-white/85">{t.author}</span> · {t.place}
+    <>
+      <h2 className="poster t-lg max-w-3xl">Ils vivent avec une toile de David.</h2>
+      <div className="mt-12 grid grid-cols-1 gap-x-12 gap-y-10 lg:grid-cols-3">
+        {testimonials.map((t) => (
+          <figure key={t.author} className="point">
+            <blockquote className="lead">« {t.quote} »</blockquote>
+            <figcaption className="small mt-5">
+              <span className="font-bold">{t.author}</span>
+              <span className="soft">, {t.place}</span>
             </figcaption>
-          </Reveal>
+          </figure>
         ))}
       </div>
-      <Reveal delay={0.1}>
-        <p className="mt-6 text-xs text-white/40">
-          Avis recueillis auprès des collectionneurs de l'atelier — commandes, salons et
-          portes ouvertes de Barjols.
-        </p>
-      </Reveal>
-    </section>
+    </>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* FAQ — lever les freins à l'achat (accordéon natif <details>).       */
+/* QUESTIONS — lever les freins à l'achat (accordéon natif <details>). */
 /* ------------------------------------------------------------------ */
 
 const faq = [
@@ -250,117 +177,70 @@ const faq = [
 
 export function Faq() {
   return (
-    <section className="mx-auto max-w-3xl px-4 py-16 sm:py-20">
-      <Reveal>
-        <p className="eyebrow">Questions fréquentes</p>
-        <h2 className="display-2 mt-4">
-          Tout ce qu'on nous demande <span className="accent-text">avant de commander</span>
-        </h2>
-      </Reveal>
-      <div className="mt-8 space-y-3">
-        {faq.map((item, i) => (
-          <Reveal key={item.q} delay={0.05 * i}>
-            <details className="card-glass group rounded-2xl px-5 transition open:border-[var(--magenta)]/40">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 font-semibold [&::-webkit-details-marker]:hidden">
-                {item.q}
-                <span
-                  aria-hidden
-                  className="accent-amber shrink-0 text-xl leading-none transition group-open:rotate-45"
-                >
-                  +
-                </span>
-              </summary>
-              <p className="pb-5 text-sm leading-relaxed text-white/65">{item.a}</p>
-            </details>
-          </Reveal>
-        ))}
-      </div>
-      <Reveal delay={0.1}>
-        <p className="mt-6 text-sm text-white/55">
+    <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+      <div>
+        <h2 className="poster t-lg">Avant de commander</h2>
+        <p className="soft mt-5 max-w-sm">
           Une autre question ?{" "}
           <a
-            href={site.social[0].href}
+            href={waLink("Bonjour David, j'ai une question avant de commander.")}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold text-[var(--amber)] hover:underline"
+            className="link"
           >
-            Écrivez à l'atelier
-          </a>{" "}
-          — David répond en personne. Envie de voir les toiles en vrai ?{" "}
-          <Link
-            href="/rendez-vous"
-            className="font-semibold text-[var(--amber)] hover:underline"
-          >
-            Prenez rendez-vous à l'atelier
+            Écrivez à David
+          </a>
+          , il répond en personne. Pour voir les toiles en vrai,{" "}
+          <Link href="/rendez-vous" className="link">
+            prenez rendez-vous à l'atelier
           </Link>
           .
         </p>
-      </Reveal>
-    </section>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* BANDEAU « un projet ? » — contact direct (footer + pages légales).  */
-/* ------------------------------------------------------------------ */
-
-export function ProjectStrip({ compact = false }: { compact?: boolean }) {
-  return (
-    <div
-      className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] ${
-        compact ? "px-5 py-4" : "px-6 py-6"
-      }`}
-    >
-      <p className="flex items-center gap-3 text-sm leading-snug text-white/75">
-        <ChatIcon className="h-5 w-5 shrink-0 text-[var(--teal)]" aria-hidden />
-        <span>
-          <span className="font-semibold text-white">Un projet, une question ?</span>{" "}
-          David répond en personne — sous 48 h.
-        </span>
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <a
-          href={waLink("Bonjour David, j'ai un projet de toile à vous proposer.")}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 rounded-lg border border-[var(--teal)]/60 px-4 py-2 text-sm font-semibold text-[var(--teal)] transition hover:bg-[var(--teal)]/10"
-        >
-          <WhatsAppIcon className="h-4 w-4" />
-          WhatsApp
-        </a>
-        <a
-          href={`mailto:${site.email}?subject=${encodeURIComponent("Projet de commande")}`}
-          className="btn-accent rounded-lg px-4 py-2 text-sm font-semibold"
-        >
-          Écrire à l'atelier
-        </a>
-        <a
-          href={site.social[0].href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white/85 transition hover:border-[var(--magenta)] hover:text-[var(--magenta)]"
-        >
-          Instagram
-        </a>
+      </div>
+      <div>
+        {faq.map((item) => (
+          <details key={item.q} className="faq-item">
+            <summary>
+              {item.q}
+              <span className="faq-plus" aria-hidden="true" />
+            </summary>
+            <p>{item.a}</p>
+          </details>
+        ))}
       </div>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* AVIS DE DÉLAI — réassurance sur la page commande.                   */
+/* CONTACT DIRECT — trois canaux, David répond en personne.            */
 /* ------------------------------------------------------------------ */
 
-export function LeadTimeNote() {
+export function ProjectStrip() {
   return (
-    <p className="flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs leading-relaxed text-white/60">
-      <CalendarIcon className="mt-0.5 h-4 w-4 shrink-0 text-[var(--teal)]" aria-hidden />
-      <span>
-        Délai habituel : <span className="font-semibold text-white/85">3 à 6 semaines</span>{" "}
-        après validation du devis. Accord d'acompte, paiement solde à la livraison —{" "}
-        <HandshakeIcon className="inline h-3.5 w-3.5 text-[var(--amber)]" aria-hidden /> en
-        toute confiance, échanges directs avec l'artiste.
-      </span>
-    </p>
+    <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-5">
+      <p className="poster t-md max-w-xl">Un projet, une question ? David répond en personne, sous 48 h.</p>
+      <div className="flex flex-wrap gap-x-4 gap-y-4">
+        <a
+          href={waLink("Bonjour David, j'ai un projet de toile à vous proposer.")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-wa"
+        >
+          <WhatsAppIcon className="h-5 w-5" />
+          WhatsApp
+        </a>
+        <a
+          href={`mailto:${site.email}?subject=${encodeURIComponent("Projet de commande")}`}
+          className="btn btn-ghost"
+        >
+          Écrire à l'atelier
+        </a>
+        <a href={site.social[0].href} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
+          <InstagramIcon className="h-5 w-5" />
+          Instagram
+        </a>
+      </div>
+    </div>
   );
 }

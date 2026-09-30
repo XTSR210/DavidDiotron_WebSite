@@ -1,131 +1,153 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { MIN_CM, formatEur, quoteCommission } from "@/lib/pricing";
-import {
-  AwardIcon,
-  ChatIcon,
-  ScrollIcon,
-} from "@/components/icons";
+import { WallPreview } from "@/components/WallPreview";
 
 /** Fiche officielle de cotation i-CAC de l'artiste. */
 const I_CAC_URL = "https://www.i-cac.fr/artiste/drioton-david/cotation.html";
 
-export function PriceCalculator() {
-  const [width, setWidth] = useState(60);
-  const [height, setHeight] = useState(80);
+/** Au-delà, la saisie au clavier reste possible (jusqu'à 3 m). */
+const SLIDER_MAX = 200;
+const MAX_CM = 300;
+
+const PRESETS: [number, number][] = [
+  [50, 50],
+  [60, 80],
+  [100, 100],
+  [120, 80],
+  [150, 100],
+];
+
+function Dimension({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const id = useId();
+  const settle = () => onChange(Math.min(MAX_CM, Math.max(MIN_CM, Math.floor(value) || MIN_CM)));
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <label htmlFor={id} className="field-label mb-0">
+          {label}
+        </label>
+        <span className="flex items-baseline gap-1.5">
+          <input
+            type="number"
+            inputMode="numeric"
+            min={MIN_CM}
+            max={MAX_CM}
+            step={1}
+            value={value || ""}
+            onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))}
+            onBlur={settle}
+            aria-label={`${label} en centimètres`}
+            className="field w-24 text-center font-bold tabular-nums"
+          />
+          <span className="soft small">cm</span>
+        </span>
+      </div>
+      <input
+        id={id}
+        type="range"
+        className="range mt-1"
+        min={MIN_CM}
+        max={SLIDER_MAX}
+        step={1}
+        value={Math.min(SLIDER_MAX, Math.max(MIN_CM, value))}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+    </div>
+  );
+}
+
+/**
+ * Simulateur : le visiteur règle largeur et hauteur, voit la toile à l'échelle
+ * sur un mur et lit l'estimation, calculée sur la grille i-CAC de l'artiste.
+ */
+export function PriceCalculator({ image }: { image?: string }) {
+  const [width, setWidth] = useState(100);
+  const [height, setHeight] = useState(100);
 
   const quote = useMemo(() => quoteCommission(width, height), [width, height]);
 
-  const inputCls =
-    "w-full rounded-lg border border-white/15 bg-[var(--ink-soft)] px-3 py-2.5 text-center text-lg font-bold outline-none focus:border-[var(--magenta)]";
-
-  const clamp = (v: number, set: (n: number) => void) => {
-    set(Number.isFinite(v) ? Math.max(0, v) : 0);
-  };
+  const preview = (
+    <>
+      <WallPreview widthCm={quote.widthCm} heightCm={quote.heightCm} image={image} />
+      <p className="faint small mt-3">
+        Aperçu à l'échelle : canapé de 2 m, silhouette d'1,72 m. Minimum réalisable à
+        l'atelier : {MIN_CM} × {MIN_CM} cm.
+      </p>
+    </>
+  );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-      <div className="card-glass relative overflow-hidden rounded-3xl p-6 sm:p-10">
-        <p className="eyebrow">Estimation en direct</p>
-        <h2 className="display-2 mt-4">
-          Combien coûte une toile <span className="accent-text">sur mesure</span> ?
-        </h2>
-        <p className="mt-4 max-w-2xl leading-relaxed text-white/60">
-          Indiquez la taille de votre pièce : le prix est estimé en direct selon la
-          cote officielle <span className="font-semibold text-white/80">i-CAC</span>{" "}
-          de l'artiste. <span className="text-white/80">Devis ferme et gratuit</span>{" "}
-          ensuite, sous 48 h — sans engagement.
+    <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
+      <div>
+        <h2 className="poster t-lg">Votre mur, votre format.</h2>
+        <p className="lead soft mt-5 max-w-xl">
+          Réglez la taille : la toile se met à l'échelle et le prix s'estime en direct, d'après
+          la cote officielle i-CAC de l'artiste.
         </p>
 
-        <div className="mt-8 grid items-end gap-4 sm:grid-cols-[1fr_1fr_auto_1.2fr]">
-          <div>
-            <label className="mb-1.5 block text-xs uppercase tracking-widest text-white/50">
-              Largeur (cm)
-            </label>
-            <input
-              type="number"
-              min={MIN_CM}
-              step={1}
-              value={width}
-              onChange={(e) => clamp(Number(e.target.value), setWidth)}
-              onBlur={() => setWidth((s) => Math.max(MIN_CM, Math.floor(s) || MIN_CM))}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs uppercase tracking-widest text-white/50">
-              Hauteur (cm)
-            </label>
-            <input
-              type="number"
-              min={MIN_CM}
-              step={1}
-              value={height}
-              onChange={(e) => clamp(Number(e.target.value), setHeight)}
-              onBlur={() => setHeight((s) => Math.max(MIN_CM, Math.floor(s) || MIN_CM))}
-              className={inputCls}
-            />
-          </div>
-          <span className="hidden pb-2 text-center text-2xl text-white/40 sm:block">×</span>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center sm:text-left">
-            <p className="text-xs uppercase tracking-widest text-white/50">Estimation</p>
-            <p className="accent-amber mt-1 text-3xl font-black">
-              ≈ {formatEur(quote.priceEur)}
-            </p>
-            <p className="mt-1 text-xs text-white/50">
-              {quote.areaCm2.toLocaleString("fr-FR")} cm² · format {quote.widthCm} ×{" "}
-              {quote.heightCm} cm
-            </p>
-            <p className="mt-0.5 text-[11px] text-white/40">
-              Repère i-CAC : {quote.refLabel} ≈ {formatEur(quote.refPriceEur)}
-            </p>
-          </div>
+        {/* Téléphone et tablette : l'aperçu reste au-dessus des réglages. */}
+        <div className="mt-8 lg:hidden">{preview}</div>
+
+        <div className="mt-8 flex flex-wrap gap-2">
+          {PRESETS.map(([w, h]) => (
+            <button
+              key={`${w}x${h}`}
+              type="button"
+              className="chip"
+              aria-pressed={quote.widthCm === w && quote.heightCm === h}
+              onClick={() => {
+                setWidth(w);
+                setHeight(h);
+              }}
+            >
+              {w} × {h}
+            </button>
+          ))}
         </div>
 
-        <p className="mt-3 text-xs text-white/40">
-          Minimum réalisable à l'atelier : {MIN_CM} × {MIN_CM} cm.
-        </p>
+        <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <Dimension label="Largeur" value={width} onChange={setWidth} />
+          <Dimension label="Hauteur" value={height} onChange={setHeight} />
+        </div>
 
-        <p className="mt-2 max-w-2xl text-xs leading-relaxed text-white/50">
-          <span className="font-semibold text-white/70">Prix approximatif</span> —
-          cette estimation est donnée à titre indicatif d'après la grille i-CAC.
-          Le prix définitif est confirmé par l'atelier (devis ferme) selon la
-          technique, le support et les frais de livraison éventuels.
-        </p>
+        <div className="mt-8 border-t-2 border-[var(--fg)] pt-5">
+          <p className="soft small">Estimation pour {quote.widthCm} × {quote.heightCm} cm</p>
+          <p className="poster price mt-1" aria-live="polite">
+            {formatEur(quote.priceEur).replace(",00", "")}
+          </p>
+          <p className="soft small mt-2 max-w-md">
+            Prix indicatif. Le devis ferme, gratuit, vous est envoyé sous 48 h ; il tient compte
+            de la technique et de la livraison. Format i-CAC le plus proche : {quote.refLabel},{" "}
+            {formatEur(quote.refPriceEur).replace(",00", "")}.
+          </p>
+        </div>
 
-        <div className="mt-6 flex flex-wrap items-center gap-3">
+        <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-4">
           <Link
-            href={`/order?ref=&w=${quote.widthCm}&h=${quote.heightCm}`}
-            className="btn-accent rounded-lg px-6 py-3 font-semibold"
+            href={{ pathname: "/order", query: { w: quote.widthCm, h: quote.heightCm } }}
+            className="btn"
           >
-            Commander cette pièce — devis gratuit
+            Demander mon devis
           </Link>
-          <a
-            href={I_CAC_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-lg border border-white/20 px-5 py-3 text-sm font-semibold text-white/85 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
-          >
-            Voir la fiche de cotation i-CAC ↗
+          <a href={I_CAC_URL} target="_blank" rel="noopener noreferrer" className="link small">
+            Voir la cotation i-CAC
           </a>
         </div>
-        <p className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs font-medium text-white/50">
-          <span className="flex items-center gap-1.5">
-            <AwardIcon className="h-4 w-4 text-[var(--amber)]" aria-hidden /> Grille
-            officielle i-CAC de l'artiste
-          </span>
-          <span className="flex items-center gap-1.5">
-            <ChatIcon className="h-4 w-4 text-[var(--teal)]" aria-hidden /> Réponse
-            personnalisée sous 48 h
-          </span>
-          <span className="flex items-center gap-1.5">
-            <ScrollIcon className="h-4 w-4 text-[var(--magenta)]" aria-hidden />{" "}
-            Certificat d'authenticité inclus
-          </span>
-        </p>
       </div>
+
+      <div className="hidden lg:sticky lg:top-28 lg:block">{preview}</div>
     </div>
   );
 }

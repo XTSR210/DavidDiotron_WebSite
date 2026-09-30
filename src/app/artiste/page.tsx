@@ -1,22 +1,16 @@
-import Link from "next/link";
 import Image from "next/image";
-import { FloatingArtwork } from "@/components/FloatingArtwork";
+import Link from "next/link";
+import PaintingBand from "@/components/scenes/PaintingBand";
+import { PageHero } from "@/components/PageHero";
+import { Section } from "@/components/Section";
 import { CtaBanner, Faq } from "@/components/commercial";
-import { Reveal } from "@/components/Reveal";
-import {
-  AwardIcon,
-  BrushIcon,
-  HandIcon,
-  NewspaperIcon,
-  PaletteIcon,
-  ScissorsIcon,
-} from "@/components/icons";
+import { HandIcon, PaletteIcon, ScissorsIcon } from "@/components/icons";
+import { canvasSize } from "@/lib/ratio";
 import { assetPath } from "@/lib/site";
 import { readArtworks } from "@/lib/artworks";
 
-
 export const metadata = {
-  title: "L'Artiste — David Drioton",
+  title: "L'artiste",
   description:
     "David Drioton, artiste peintre pop art à Barjols (Var, PACA) : affiches déchirées, couleurs flamboyantes, pièces uniques peintes à la main. Prix Univers des Arts 2017.",
 };
@@ -24,19 +18,16 @@ export const metadata = {
 const pillars = [
   {
     Icon: PaletteIcon,
-    accent: "text-[var(--magenta)]",
     title: "Pop art flamboyant",
     text: "Des couleurs qui jaillissent, des personnages dessinés et peints à la main. Une énergie directe, héritée de la pop culture des années 50 à aujourd'hui.",
   },
   {
     Icon: ScissorsIcon,
-    accent: "text-[var(--amber)]",
     title: "Collages d'affiches",
     text: "Fragments d'affiches déchirées du métro parisien réassemblés sur la toile : la rue entre dans l'atelier, la matière raconte une histoire.",
   },
   {
     Icon: HandIcon,
-    accent: "text-[var(--teal)]",
     title: "Peint à la main",
     text: "Chaque toile est unique, réalisée à l'atelier de Barjols. Pas de série, pas d'impression : une pièce originale, signée, pour un seul collectionneur.",
   },
@@ -45,17 +36,17 @@ const pillars = [
 const milestones = [
   {
     year: "La rencontre",
-    title: "Nadine Foster & Jackson Pollock",
+    title: "Nadine Foster et Jackson Pollock",
     text: "Sa rencontre avec la peintre Nadine Foster affine sa technique ; la découverte de Jackson Pollock libère son geste. Une bascule décisive.",
   },
   {
     year: "2011",
     title: "Premières expositions parisiennes",
-    text: "Galerie Estade, place des Vosges, et galerie Next à Toulouse — le travail sort de l'atelier. Il remporte la même année un important concours d'affiches.",
+    text: "Galerie Estade, place des Vosges, et galerie Next à Toulouse : le travail sort de l'atelier. Il remporte la même année un important concours d'affiches.",
   },
   {
     year: "2012",
-    title: "Figaro Magazine & salons du Sud",
+    title: "Figaro Magazine et salons du Sud",
     text: "Le Figaro Magazine lui consacre un article (novembre 2012). Salons S'MART d'Aix-en-Provence, Valbonne, Elan d'Arts de Montpellier, galerie du Crescendo à Mougins, galerie d'As à Cavalaire.",
   },
   {
@@ -65,38 +56,63 @@ const milestones = [
   },
   {
     year: "2014",
-    title: "Salon de Lourmarin & Carre d'artistes",
-    text: "Salon international d'arts contemporain de Lourmarin (juillet 2014), entrée dans le réseau des galeries Carre d'artistes (Miami, Lisbonne, Chine).",
+    title: "Salon de Lourmarin et Carré d'artistes",
+    text: "Salon international d'art contemporain de Lourmarin (juillet 2014), entrée dans le réseau des galeries Carré d'artistes (Miami, Lisbonne, Chine).",
   },
   {
     year: "2017",
-    title: "Prix Univers des Arts & Berlin",
-    text: "Prix Univers des Arts (mai 2017) et galerie Carre d'artistes à Berlin. Deux consécrations la même année.",
+    title: "Prix Univers des Arts et Berlin",
+    text: "Prix Univers des Arts (mai 2017) et galerie Carré d'artistes à Berlin. Deux consécrations la même année.",
   },
   {
     year: "2019",
-    title: "Hong Kong & retour en Provence",
-    text: "Galerie Carre à Hong Kong, exposition au pôle culturel de Saint-Maximin-la-Sainte-Baume (septembre 2019) — et Paris, Cours Saint-Émilion.",
+    title: "Hong Kong et retour en Provence",
+    text: "Galerie Carré à Hong Kong, exposition au pôle culturel de Saint-Maximin-la-Sainte-Baume (septembre 2019), et Paris, Cours Saint-Émilion.",
   },
   {
     year: "2020",
     title: "Entrée au musée Paul Bédu",
-    text: "Exposition à l'Espace Paul Bédu de Milly-la-Forêt (septembre–novembre 2020) : son travail entre dans la collection du musée. Galerie Calçada à Lisbonne la même année.",
+    text: "Exposition à l'Espace Paul Bédu de Milly-la-Forêt (septembre à novembre 2020) : son travail entre dans la collection du musée. Galerie Calçada à Lisbonne la même année.",
   },
   {
     year: "2022",
-    title: "Singapour & Malaisie",
-    text: "Galerie Carre d'artistes en Malaisie et Singapour ; Art et Vin au domaine Saint-Ferréol. Artprice enregistre ses ventes aux enchères (11 résultats en peinture).",
+    title: "Singapour et Malaisie",
+    text: "Galerie Carré d'artistes en Malaisie et à Singapour ; Art et Vin au domaine Saint-Ferréol. Artprice enregistre ses ventes aux enchères (11 résultats en peinture).",
   },
   {
     year: "2023",
     title: "Musée Simon Sigal, Aups",
-    text: "Galerie Carre d'artistes à Metz et exposition au musée Simon Sigal d'Aups (Haut-Var) — la Provence reconnaît le sien.",
+    text: "Galerie Carré d'artistes à Metz et exposition au musée Simon Sigal d'Aups (Haut-Var) : la Provence reconnaît le sien.",
   },
   {
     year: "Aujourd'hui",
     title: "L'atelier de Barjols",
-    text: "Enraciné dans le Var, il peint à l'atelier du 12 rue Pierre Curie, ouvre ses portes chaque été avec les artistes barjolais — et réalise des pièces sur mesure pour les collectionneurs d'ici et d'ailleurs.",
+    text: "Enraciné dans le Var, il peint à l'atelier du 12 rue Pierre Curie, ouvre ses portes chaque été avec les artistes barjolais, et réalise des pièces sur mesure pour les collectionneurs d'ici et d'ailleurs.",
+  },
+];
+
+const press = [
+  { k: "Figaro Magazine", d: "Article, novembre 2012", href: null },
+  { k: "Univers des Arts", d: "Revue d'art, mai 2013", href: null },
+  {
+    k: "Reportage vidéo",
+    d: "« Tout quitter pour devenir artiste à 50 ans »",
+    href: "https://www.youtube.com/watch?v=A9T8cVTbFG8",
+  },
+  {
+    k: "Carré d'artistes",
+    d: "Visite filmée de son atelier",
+    href: "https://www.carredartistes.com/fr-be/visite-atelier-drioton",
+  },
+  {
+    k: "Cotation i-CAC",
+    d: "Cotation officielle de l'artiste",
+    href: "https://www.i-cac.fr/artiste/drioton-david/cotation.html",
+  },
+  {
+    k: "Artprice",
+    d: "11 résultats en ventes publiques",
+    href: "https://fr.artprice.com/artiste/592681/david-drioton",
   },
 ];
 
@@ -105,304 +121,185 @@ export default async function ArtistPage() {
   const featured = artworks.slice(0, 6);
 
   return (
-    <div>
-      {/* Hero — portrait of the artist through his own works */}
-      <section className="relative overflow-hidden">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-20 pt-16 sm:pt-20 lg:grid-cols-2">
-          <div>
-            <Reveal>
-            <p className="eyebrow">
-              L'artiste · Barjols, Var (PACA)
-            </p>
-            </Reveal>
-            <Reveal delay={0.08}>
-            <h1 className="display-1 mt-5">
-              David Drioton, une <span className="accent-text">vision pop</span> née en
-              Provence.
-            </h1>
-            </Reveal>
-            <Reveal delay={0.16}>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/70">
-              Artiste peintre reconnu dans sa région, David puise dans la rue, la
-              publicité et les affiches déchirées du métro pour composer des toiles
-              uniques, pleines de couleurs et de personnages. Son atelier est à
-              Barjols, dans le Var. Ses œuvres, elles, voyagent à travers le monde.
-            </p>
-            </Reveal>
-            <Reveal delay={0.24}>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/order" className="btn-accent rounded-lg px-5 py-2.5 font-semibold">
-                Commander une pièce
-              </Link>
-              <Link
-                href="/gallery"
-                className="rounded-lg border border-white/20 px-5 py-2.5 font-semibold text-white/85 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
-              >
-                Voir ses œuvres
-              </Link>
-            </div>
-            </Reveal>
-            <Reveal delay={0.32}>
-              <p className="mt-6 flex items-center gap-2 text-xs font-medium tracking-wide text-white/55">
-                <AwardIcon className="h-4 w-4 shrink-0 text-[var(--amber)]" aria-hidden />
-                Artiste coté i-CAC — estimation et devis au format exact de votre mur.
-              </p>
-            </Reveal>
+    <>
+      <PageHero
+        title={
+          <>
+            Une vision pop,
+            <br />
+            née en Provence.
+          </>
+        }
+        aside={
+          <div className="bloc-jaune duotone mx-auto w-full max-w-sm lg:max-w-none">
+            <Image
+              src={assetPath("/artist/david-drioton.jpg")}
+              alt="Portrait de David Drioton"
+              width={700}
+              height={700}
+              priority
+              sizes="(max-width: 1024px) 384px, 30vw"
+            />
           </div>
+        }
+      >
+        <p className="lead">
+          David Drioton puise dans la rue, la publicité et les affiches déchirées du métro pour
+          composer des toiles uniques, pleines de couleurs et de personnages. Son atelier est à
+          Barjols, dans le Var. Ses œuvres, elles, voyagent à travers le monde.
+        </p>
+        <div className="flex flex-wrap gap-x-5 gap-y-4">
+          <Link href="/gallery" className="btn">
+            Voir ses toiles
+          </Link>
+          <Link href="/order" className="btn btn-ghost">
+            Commander une toile
+          </Link>
+        </div>
+      </PageHero>
 
-          {/* Floating collage — his own works, scattered without overlap */}
-          <div className="pointer-events-none relative h-[520px] select-none sm:h-[620px]">
-            {featured.slice(0, 4).map((artwork, i) => {
-              const cfg = [
-                { variant: "float" as const, duration: 7, tilt: -4, delay: 0 },
-                { variant: "drift" as const, duration: 10, tilt: 3, delay: 0.15 },
-                { variant: "float" as const, duration: 8, tilt: 2, delay: 0.3 },
-                { variant: "drift" as const, duration: 11, tilt: -2, delay: 0.45 },
-              ][i];
-              const pos = [
-                "left-[0%] top-[4%] w-40 sm:w-52 z-20",
-                "left-[52%] top-[6%] w-40 sm:w-52 z-20",
-                "left-[6%] top-[52%] w-40 sm:w-52 z-10",
-                "left-[52%] top-[54%] w-40 sm:w-52 z-10",
-              ][i];
-              return (
-                <div key={artwork.id} className={`absolute ${pos}`}>
-                  <FloatingArtwork
-                    artwork={artwork}
-                    variant={cfg.variant}
-                    duration={cfg.duration}
-                    tilt={cfg.tilt}
-                    delay={cfg.delay}
-                    priority={i < 2}
-                  />
+      {/* L'homme derrière la toile */}
+      <Section tone="papier" torn={3}>
+        <div className="grid grid-cols-1 gap-x-16 gap-y-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <h2 className="poster t-lg">Un peintre, un geste, une signature.</h2>
+          <div className="prose-block">
+            <p className="lead">
+              Né en 1966, David a d'abord mené une autre vie — cadre en entreprise, marié, trois
+              enfants — avant de tout quitter à 50 ans pour se consacrer entièrement à la peinture,
+              un choix raconté dans un reportage qui lui est consacré.
+            </p>
+            <p>
+              Élève appliqué, il commence par les natures mortes, les portraits et les nus,
+              perfectionnant sa technique auprès de la peintre Nadine Foster. Puis vient la
+              découverte de Jackson Pollock — une révélation qui libère son geste et l'oriente vers
+              un art de la couleur pure et de la matière.
+            </p>
+            <p>
+              En 2010, il revient s'installer sous le soleil de Provence, entre
+              Saint-Maximin-la-Sainte-Baume et Barjols (Var). Inspiré par les affiches déchirées du
+              métro parisien, il fait entrer dans ses toiles les icônes de la pop culture —
+              super-héros, stars, bandes dessinées — découpées, superposées, peintes à la main,
+              avec, plus récemment, des vinyles et des affiches d'avant-guerre.
+            </p>
+            <p>
+              Prix Univers des Arts 2017, exposé de Paris à Miami, Berlin, Hong Kong et Singapour,
+              présent dans les collections des musées Paul Bédu (Milly-la-Forêt) et Simon Sigal
+              (Aups). Aujourd'hui, il continue de peindre à l'atelier : chaque toile est unique,
+              signée, et attend son collectionneur.
+            </p>
+          </div>
+        </div>
+      </Section>
+
+      {/* Manifeste */}
+      <Section tone="magenta" torn={8} halftone>
+        <figure className="mx-auto max-w-5xl">
+          <blockquote className="quote">
+            « Je veux que la couleur saute, que l'affiche se déchire et que le personnage prenne
+            vie. Chaque toile est une histoire que je laisse parler — et je la peins à la main, une
+            seule fois, pour vous. »
+          </blockquote>
+          <figcaption className="poster t-sm mt-8">David Drioton</figcaption>
+        </figure>
+      </Section>
+
+      {/* Son univers */}
+      <Section tone="noir" torn={10}>
+        <h2 className="poster t-lg">Son univers</h2>
+        <ul className="grid-points mt-12">
+          {pillars.map((p) => (
+            <li key={p.title} className="point">
+              <p.Icon className="point-icon" />
+              <h3 className="poster t-sm mt-4">{p.title}</h3>
+              <p className="soft mt-2">{p.text}</p>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <PaintingBand artworks={artworks} />
+
+      {/* Parcours */}
+      <Section tone="papier" torn={12}>
+        <h2 className="poster t-lg">Le parcours</h2>
+        <ol className="mt-12">
+          {milestones.map((m) => (
+            <li key={m.title} className="timeline-row">
+              <p className="poster timeline-year">{m.year}</p>
+              <div className="max-w-2xl">
+                <h3 className="text-xl font-bold leading-tight">{m.title}</h3>
+                <p className="soft mt-2">{m.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </Section>
+
+      {/* Presse et reconnaissance */}
+      <Section tone="noir" torn={13}>
+        <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <h2 className="poster t-lg">Ils parlent de lui</h2>
+          <div>
+            {press.map((p) => {
+              const inner = (
+                <>
+                  <span>
+                    <span className="block text-lg font-bold">{p.k}</span>
+                    <span className="soft small block">{p.d}</span>
+                  </span>
+                  {p.href ? <span className="small shrink-0 font-bold">Voir la source</span> : null}
+                </>
+              );
+              return p.href ? (
+                <a key={p.k} href={p.href} target="_blank" rel="noopener noreferrer" className="row-link">
+                  {inner}
+                </a>
+              ) : (
+                <div key={p.k} className="row-link">
+                  {inner}
                 </div>
               );
             })}
           </div>
         </div>
-      </section>
 
-      {/* Portrait — the man behind the canvases */}
-      <section className="border-y border-white/10 bg-white/[0.03]">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 lg:grid-cols-[380px_1fr]">
-          <Reveal direction="left" className="relative mx-auto w-64 sm:w-72">
-            <div
-              className="absolute -inset-3 -rotate-2 rounded-2xl border-2 border-[var(--magenta)]/40"
-              aria-hidden
-            />
-            <div className="relative overflow-hidden rounded-2xl border border-white/15 shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
-              <Image
-                src={assetPath("/artist/david-drioton.jpg")}
-                alt="David Drioton, artiste peintre, dans son atelier"
-                width={700}
-                height={700}
-                priority
-                className="h-auto w-full object-cover"
-              />
-            </div>
-            <p className="mt-3 text-center text-xs uppercase tracking-[0.2em] text-white/50">
-              David Drioton · l'atelier, Provence
-            </p>
-          </Reveal>
-          <Reveal direction="right">
-            <p className="eyebrow">
-              L'homme derrière la toile
-            </p>
-            <h2 className="display-2 mt-4">
-              Un peintre, un <span className="accent-text">geste</span>, une signature.
-            </h2>
-            <div className="mt-5 space-y-3 leading-relaxed text-white/70">
-              <p>
-                Né en 1966, David a d'abord mené une autre vie — cadre en entreprise,
-                marié, trois enfants — avant de tout quitter à 50 ans pour se
-                consacrer entièrement à la peinture, un choix raconté dans un
-                reportage qui lui est consacré.
-              </p>
-              <p>
-                Élève appliqué, il commence par les natures mortes, les portraits et
-                les nus, perfectionnant sa technique auprès de la peintre Nadine
-                Foster. Puis vient la découverte de Jackson Pollock — une révélation
-                qui libère son geste et l'oriente vers un art de la couleur pure et de
-                la matière.
-              </p>
-              <p>
-                En 2010, il revient s'installer sous le soleil de Provence, entre
-                Saint-Maximin-la-Sainte-Baume et Barjols (Var). Inspiré par les
-                affiches déchirées du métro parisien, il fait entrer dans ses toiles
-                les icônes de la pop culture — super-héros, stars, bandes dessinées —
-                découpées, superposées, peintes à la main, avec, plus récemment, des
-                vinyles et des affiches d'avant-guerre.
-              </p>
-              <p>
-                Prix Univers des Arts 2017, exposé de Paris à Miami, Berlin, Hong Kong
-                et Singapour, présent dans les collections des musées Paul Bédu
-                (Milly-la-Forêt) et Simon Sigal (Aups). Aujourd'hui, il continue de
-                peindre à l'atelier : chaque toile est unique, signée, et attend son
-                collectionneur.
-              </p>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* Manifesto */}
-      <section className="border-y border-white/10 bg-white/[0.03]">
-        <div className="mx-auto max-w-4xl px-4 py-20 text-center">
-          <BrushIcon className="mx-auto h-12 w-12 text-[var(--magenta)]" />
-          <blockquote className="display-2 mt-6 leading-snug">
-            « Je veux que la couleur saute, que l'affiche se déchire et que le
-            personnage prenne vie. Chaque toile est une histoire que je laisse
-            parler — et je la peins à la main, une seule fois, pour vous. »
-          </blockquote>
-          <p className="mt-6 text-sm uppercase tracking-[0.2em] accent-amber">— David Drioton</p>
-        </div>
-      </section>
-
-      {/* His universe — three pillars */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-        <Reveal>
-          <p className="eyebrow">Trois signatures</p>
-          <h2 className="display-2 mt-4">
-            Son <span className="accent-text">univers</span>
-          </h2>
-        </Reveal>
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {pillars.map((p, i) => (
-            <Reveal key={p.title} delay={i * 0.1} className="card-glass rounded-2xl p-6">
-              <p.Icon className={`h-10 w-10 ${p.accent}`} />
-              <h3 className="mt-3 text-lg font-bold">{p.title}</h3>
-              <p className="mt-2 text-sm text-white/70">{p.text}</p>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* Parcours */}
-      <section className="border-y border-white/10 bg-white/[0.03]">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-          <Reveal>
-            <p className="eyebrow">Repères</p>
-            <h2 className="display-2 mt-4">
-              Le <span className="accent-amber">parcours</span>
-            </h2>
-          </Reveal>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2">
-            {milestones.map((m, i) => (
-              <Reveal key={m.title} delay={i * 0.08} className="card-glass rounded-2xl p-6">
-                <p className="text-xs font-bold uppercase tracking-[0.2em] accent-text">{m.year}</p>
-                <h3 className="mt-2 text-lg font-bold">{m.title}</h3>
-                <p className="mt-2 text-sm text-white/70">{m.text}</p>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Presse & reconnaissance */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-        <Reveal>
-          <p className="eyebrow">Presse & reconnaissance</p>
-          <h2 className="display-2 mt-4">
-            Ils parlent de <span className="accent-text">lui</span>
-          </h2>
-        </Reveal>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            {
-              k: "Figaro Magazine",
-              d: "Article — novembre 2012",
-              href: null,
-            },
-            {
-              k: "Univers des Arts",
-              d: "Revue d'art — mai 2013",
-              href: null,
-            },
-            {
-              k: "Reportage vidéo",
-              d: "« Tout quitter pour devenir artiste à 50 ans »",
-              href: "https://www.youtube.com/watch?v=A9T8cVTbFG8",
-            },
-            {
-              k: "Carré d'artistes",
-              d: "Visite d'atelier filmée dans son atelier",
-              href: "https://www.carredartistes.com/fr-be/visite-atelier-drioton",
-            },
-            {
-              k: "Cotation i-CAC",
-              d: "Cotation officielle de l'artiste",
-              href: "https://www.i-cac.fr/artiste/drioton-david/cotation.html",
-            },
-            {
-              k: "Artprice",
-              d: "11 résultats en ventes publiques",
-              href: "https://fr.artprice.com/artiste/592681/david-drioton",
-            },
-          ].map((p, i) => (
-            <Reveal key={p.k} delay={0.06 * (i % 3)} className="card-glass rounded-2xl p-5">
-              <NewspaperIcon className="h-5 w-5 text-[var(--amber)]" />
-              <h3 className="mt-2.5 font-bold">{p.k}</h3>
-              <p className="mt-1 text-sm text-white/60">{p.d}</p>
-              {p.href ? (
-                <a
-                  href={p.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-2.5 inline-block text-xs font-semibold text-[var(--magenta)] hover:underline"
-                >
-                  Voir la source →
-                </a>
-              ) : null}
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* A window on the works */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="eyebrow">Sélection</p>
-            <h2 className="display-2 mt-4">
-              Un aperçu de <span className="accent-text">l'atelier</span>
-            </h2>
-            <p className="mt-3 max-w-xl text-white/60">
-              Une sélection d'œuvres récentes, peintes à la main à Barjols. La
-              galerie complète est à un clic.
-            </p>
-          </div>
-          <Link href="/gallery" className="text-sm font-semibold accent-amber transition hover:brightness-110">
-            Toute la galerie →
+        {/* Un aperçu de l'atelier */}
+        <div className="mt-[clamp(4.5rem,10vw,8rem)] flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
+          <h2 className="poster t-lg">Un aperçu de l'atelier</h2>
+          <Link href="/gallery" className="link">
+            Toute la galerie
           </Link>
         </div>
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {featured.map((a, i) => (
-            <Reveal key={a.id} delay={Math.min(i * 0.06, 0.4)}>
-              <Link
-                href={`/order?ref=${a.id}`}
-                className="group relative block aspect-[3/4] overflow-hidden rounded-xl border border-white/10"
-              >
+        <ul className="mt-10 grid grid-cols-2 gap-x-[clamp(0.9rem,2.4vw,2.2rem)] gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
+          {featured.map((a) => (
+            <li key={a.id}>
+              <Link href={{ pathname: "/order", query: { ref: a.id } }} className="hang-link">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={a.image}
                   alt={a.title}
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.05]"
+                  {...canvasSize(a)}
+                  loading="lazy"
+                  decoding="async"
+                  className="hang-canvas !h-auto w-full"
                 />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                  <p className="text-sm font-semibold">{a.title}</p>
-                </div>
+                <span className="cartel block">
+                  <span className="cartel-title">{a.title}</span>
+                </span>
               </Link>
-            </Reveal>
+            </li>
           ))}
-        </div>
-      </section>
+        </ul>
+      </Section>
 
-      {/* CTA — commission + FAQ pour lever les derniers freins */}
-      <Faq />
+      <Section tone="papier" torn={14}>
+        <Faq />
+      </Section>
+
       <CtaBanner
         title="Faites entrer l'atelier chez vous."
-        text="Décrivez le mur, l'ambiance, la taille — David propose une composition sur mesure et vous répond avec un devis ferme."
+        text="Décrivez le mur, l'ambiance, la taille. David propose une composition sur mesure et vous répond avec un devis ferme."
       />
-    </div>
+    </>
   );
 }

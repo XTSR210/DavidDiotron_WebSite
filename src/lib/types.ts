@@ -22,6 +22,8 @@ export interface Artwork {
   source?: string;
   /** Free-form note shown under the title. */
   note?: string;
+  /** Rapport largeur / hauteur de l'image, calculé au build (jamais enregistré). */
+  ratio?: number;
 }
 
 /** A commission order placed from the order page. */

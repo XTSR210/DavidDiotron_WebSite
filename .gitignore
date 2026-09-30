@@ -10,3 +10,7 @@ data/orders.json
 # Outils Freebuff (état local, logs, run-doc)
 .freebuff/
 tsconfig.tsbuildinfo
+
+# Carte Graphify (régénérable) et archive de l'ancien site
+graphify-out/
+avant-refonte-*.tar.gz

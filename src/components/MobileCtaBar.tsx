@@ -1,15 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+/** Pages où la barre gênerait : on y commande déjà, ou c'est l'espace privé. */
+const HIDDEN_ON = ["/order", "/admin"];
+
 /**
- * Barre d'action fixe (mobile uniquement) : le chemin de conversion reste
- * toujours à portée de pouce — apparaît après un écran de défilement pour
- * ne pas gêner la découverte du hero.
+ * Barre d'action fixe (téléphone et tablette en portrait) : commander reste à
+ * portée de pouce. Elle n'apparaît qu'après un écran de défilement, pour
+ * laisser le mur d'accueil respirer.
  */
 export function MobileCtaBar() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
+  const hidden = HIDDEN_ON.some((p) => pathname.startsWith(p));
 
   useEffect(() => {
     let raf = 0;
@@ -24,30 +30,18 @@ export function MobileCtaBar() {
       window.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [pathname]);
+
+  if (hidden) return null;
 
   return (
-    <div
-      className={`mobile-cta-bar ${visible ? "mobile-cta-visible" : ""}`}
-      aria-hidden={!visible}
-    >
-      <div className="mx-auto flex max-w-md items-center gap-2 px-3 pb-3">
-        <Link
-          href="/order"
-          tabIndex={visible ? 0 : -1}
-          className="btn-accent flex-1 rounded-xl py-3 text-center text-sm font-bold shadow-[0_12px_34px_rgba(0,0,0,0.55)]"
-        >
-          Commander ma toile
-        </Link>
-        <Link
-          href="/gallery"
-          tabIndex={visible ? 0 : -1}
-          className="rounded-xl border border-white/20 bg-[var(--ink-soft)]/95 py-3 text-center text-sm font-semibold text-white/85 shadow-[0_12px_34px_rgba(0,0,0,0.55)] backdrop-blur transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
-          style={{ width: "6.5rem" }}
-        >
-          Galerie
-        </Link>
-      </div>
+    <div className={`mobile-cta-bar ${visible ? "is-visible" : ""}`} inert={!visible}>
+      <Link href="/order" className="btn btn-sm flex-1">
+        Commander une toile
+      </Link>
+      <Link href="/gallery" className="btn btn-sm btn-ghost">
+        Galerie
+      </Link>
     </div>
   );
 }

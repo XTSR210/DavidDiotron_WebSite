@@ -543,7 +543,7 @@ export default function AdminPage() {
           <div className="card-glass mt-5 rounded-2xl p-6">
             <h2 className="text-base font-bold">Ajouter une œuvre</h2>
             <form onSubmit={add} className="mt-3 space-y-3">
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -597,7 +597,7 @@ export default function AdminPage() {
             <h2 className="text-base font-bold text-white/70">
               Œuvres ({artworks.length})
             </h2>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {artworks.map((a) => (
                 <div key={a.id} className="rounded-xl bg-white/5 p-3">
                   <div className="flex items-center gap-3">
