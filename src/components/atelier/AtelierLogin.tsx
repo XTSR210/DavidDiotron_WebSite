@@ -15,7 +15,7 @@ const MIN_PASSWORD = 8;
 const GITHUB_TOKEN_URL =
   "https://github.com/settings/personal-access-tokens/new?description=Atelier%20David%20Drioton";
 
-type View = "password" | "forgot" | "github";
+type View = "password" | "forgot" | "start" | "github";
 
 /** Champ mot de passe avec bouton Afficher / Masquer. */
 function PasswordField({
@@ -122,13 +122,26 @@ export function AtelierLogin({
     setBase({ kind: "checking" });
     const state = await probeBase();
     setBase(state);
-    if (state.kind === "off") setView((v) => (v === "password" || v === "forgot" ? "github" : v));
-    if (state.kind === "on") setView((v) => (v === "github" ? "password" : v));
+    if (state.kind === "off") setView((v) => (v === "github" ? v : "start"));
+    if (state.kind === "on") setView((v) => (v === "start" ? "password" : v));
   };
 
   useEffect(() => {
     void check();
   }, []);
+
+  // Base pas encore lancée : on la guette, la page se connecte dès qu'elle répond.
+  useEffect(() => {
+    if (base.kind !== "off") return;
+    const timer = setInterval(async () => {
+      const state = await probeBase();
+      if (state.kind === "on") {
+        setBase(state);
+        setView((v) => (v === "start" ? "password" : v));
+      }
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [base.kind]);
 
   const go = (next: View) => {
     setView(next);
@@ -169,33 +182,53 @@ export function AtelierLogin({
   if (base.kind === "checking") {
     title = "Ouverture de l'atelier";
     body = <p className="soft">Recherche de la base de l'atelier sur cet ordinateur…</p>;
+  } else if (view === "start") {
+    title = "Lancez l'atelier";
+    body = (
+      <div className="space-y-6">
+        <ol className="space-y-4">
+          <li className="grid grid-cols-[2.5rem_1fr] items-baseline gap-x-3">
+            <span className="poster t-md text-[var(--jaune)]">1.</span>
+            <span>
+              Sur l'ordinateur de l'atelier, ouvrez le dossier du site{" "}
+              <strong>DavidDrioton</strong> (sur le Bureau).
+            </span>
+          </li>
+          <li className="grid grid-cols-[2.5rem_1fr] items-baseline gap-x-3">
+            <span className="poster t-md text-[var(--jaune)]">2.</span>
+            <span>
+              Double-cliquez sur <strong>atelier.command</strong> (Mac) ou{" "}
+              <strong>atelier.bat</strong> (Windows). Une fenêtre s'ouvre : laissez-la ouverte.
+            </span>
+          </li>
+          <li className="grid grid-cols-[2.5rem_1fr] items-baseline gap-x-3">
+            <span className="poster t-md text-[var(--jaune)]">3.</span>
+            <span>C'est tout : cette page se connecte d'elle-même dès que la base répond.</span>
+          </li>
+        </ol>
+        <p className="soft small flex items-center gap-2">
+          <span aria-hidden="true" className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-[var(--jaune)]" />
+          En attente de la base de l'atelier…
+        </p>
+        {!onLocalSite ? (
+          <p className="faint small">
+            Sur Safari, ouvrez plutôt la version de l'atelier lancée sur l'ordinateur :{" "}
+            <a className="link" href="http://localhost:3210/admin/">
+              localhost:3210/admin
+            </a>
+            .
+          </p>
+        ) : null}
+        <button type="button" className="link small" onClick={() => go("github")}>
+          Je ne suis pas sur l'ordinateur de l'atelier
+        </button>
+      </div>
+    );
   } else if (view === "github") {
     title = "Depuis un autre appareil";
     body = (
       <>
-        {base.kind === "off" ? (
-          <div className="soft space-y-3">
-            <p>
-              La base de l'atelier ne répond pas sur cet appareil. Sur l'ordinateur de l'atelier,
-              lancez-la d'un double-clic sur <strong className="text-[var(--fg)]">atelier.command</strong>{" "}
-              (Mac) ou <strong className="text-[var(--fg)]">atelier.bat</strong> (Windows), puis :
-            </p>
-            <button type="button" className="btn btn-sm" onClick={() => void check()}>
-              Réessayer
-            </button>
-            {!onLocalSite ? (
-              <p className="small">
-                Sur Safari, la base n'est joignable que depuis la version locale du site :{" "}
-                <a className="link" href="http://localhost:3210/admin/">
-                  localhost:3210/admin
-                </a>
-                .
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-
-        <div className="mt-8 border-t-2 border-[var(--fg)] pt-6">
+        <div>
           <p className="soft">
             Sans la base, vous pouvez modifier la galerie directement sur GitHub, avec une clé
             d'accès (« jeton »). Aucun mot de passe n'est nécessaire.
@@ -254,11 +287,13 @@ export function AtelierLogin({
             </ol>
           </details>
         </div>
-        {base.kind === "on" ? (
-          <button type="button" className="link small mt-6" onClick={() => go("password")}>
-            Revenir au mot de passe de l'atelier
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className="link small mt-6"
+          onClick={() => go(base.kind === "on" ? "password" : "start")}
+        >
+          {base.kind === "on" ? "Revenir au mot de passe de l'atelier" : "Revenir au lancement de l'atelier"}
+        </button>
       </>
     );
   } else if (view === "forgot") {
