@@ -21,7 +21,8 @@ pilotées au défilement).
 | Brique | Choix | À savoir |
 |---|---|---|
 | Framework | **Next.js 15** (App Router), React 19, TypeScript strict | |
-| Rendu | **Export 100 % statique** (`output: "export"`) | Aucun serveur, aucune route API, aucune action serveur |
+| Rendu | Pages générées à l'avance (ISR) + fonctions Vercel pour l'atelier | Les pages se régénèrent dès que l'atelier enregistre (étiquette de cache `artworks`) |
+| Données | **Vercel Blob**, magasin `david-drioton-atelier` (public, région cdg1) | `atelier/artworks.json` (galerie), `atelier/auth.json` (connexion, chiffrée), `toiles/*` (photos). À défaut : `data/artworks.json` du dépôt |
 | Hébergement | **Vercel**, projet `david-drioton` (équipe Ecomsia) → https://david-drioton.vercel.app | Relié au dépôt `XTSR210/DavidDiotron_WebSite` : chaque push sur `main` redéploie |
 | Ancienne adresse | GitHub Pages (`xtsr210.github.io/DavidDiotron_WebSite`) | Ne fait plus que rediriger vers Vercel en gardant la page demandée : le workflow existant lance `npm run build` avec `GITHUB_PAGES=true`, et `scripts/build.mjs` publie alors `.github/redirect/` au lieu du site |
 | Style | Tailwind CSS v4 + classes maison dans `src/app/globals.css` | Voir §5 |
@@ -43,30 +44,36 @@ npx vercel deploy --prod           # mise en ligne manuelle (sinon : push sur ma
 
 Aperçu dans Claude Code : configuration `site` de `.claude/launch.json` (port 3210).
 
-Atelier : double-clic sur `atelier.command` (Mac) ou `atelier.bat` (Windows).
-Lance la base de l'atelier `local-server.mjs` (port 3311, écrit
-`data/artworks.json` et `public/artworks/`) et le site sur le port 3210, puis
-ouvre `/admin/`. Base seule : `npm run atelier`. Changer le mot de passe depuis
-un terminal : `npm run atelier:mdp`.
+### Espace Atelier (`/admin/`) — entièrement sur Vercel
 
-### Connexion à l'espace Atelier (`/admin/`)
+Rien ne tourne sur l'ordinateur de l'artiste : il ouvre
+https://david-drioton.vercel.app/admin/ depuis n'importe quel appareil.
 
-- **Sur l'ordinateur de l'atelier** : mot de passe vérifié par la base
-  (`local-server.mjs`). Seule son empreinte scrypt est enregistrée, dans
-  `data/.atelier-auth.json` (propre à chaque ordinateur, hors Git). Pas de
-  fichier = premier passage : l'écran propose de créer le mot de passe.
-- **Mot de passe oublié** : l'écran demande un code à 6 chiffres que la base
-  affiche dans SA fenêtre (Terminal ou fenêtre noire), valable 10 min.
-  Voir le code prouve qu'on est devant l'ordinateur.
-- **Sessions** : jeton aléatoire de 12 h (`Authorization: Bearer`), gardé dans
-  `sessionStorage` ; le mot de passe n'est jamais stocké par le navigateur.
-  5 essais ratés = blocage 10 min.
-- **Ailleurs** (base injoignable) : connexion au dépôt GitHub avec une clé
-  personnelle « Contents : Read and write », gardée dans `localStorage`.
-- La base n'accepte que les appels venant de `localhost` et de
-  `david-drioton.vercel.app` (CORS + contrôle de l'origine ; à compléter si
-  un nom de domaine est ajouté). Safari bloque l'appel du
-  site en ligne vers `localhost` : passer par `http://localhost:3210/admin/`.
+- **Installation** (une fois) : code d'installation `ATELIER_SETUP_CODE`
+  (variable Vercel) + choix du mot de passe. Une **clé de secours**
+  (16 caractères) s'affiche une seule fois, à noter.
+- **Mot de passe oublié** : clé de secours + nouveau mot de passe (une
+  nouvelle clé est alors remise). Clé perdue aussi : effacer
+  `atelier/auth.json` du magasin Blob et remettre un nouveau
+  `ATELIER_SETUP_CODE`, puis refaire l'installation.
+- **Sécurité** : empreintes scrypt du mot de passe et de la clé, dans
+  `atelier/auth.json` chiffré en AES-256-GCM (clé tirée de `ATELIER_SECRET`,
+  le magasin étant public). Session : cookie httpOnly signé (HMAC), 12 h,
+  `SameSite=Strict`, invalidée à chaque changement de mot de passe. Contrôle
+  de l'origine sur les écritures, 5 essais ratés = blocage 10 min (par
+  instance), 0,7 s de pause par erreur.
+- **Enregistrer** = en ligne aussitôt : l'API écrit la galerie puis vide le
+  cache `artworks` (`revalidateTag`) ; plus de bouton « Publier », plus de
+  commit Git pour les toiles.
+- **Photos** : préparées dans le navigateur (1600 px + 600 px, JPEG), envoyées
+  à `/api/atelier/upload/` (limite Vercel : 4,5 Mo par requête).
+- **Variables Vercel** : `BLOB_READ_WRITE_TOKEN` (créée avec le magasin),
+  `ATELIER_SECRET` (à ne jamais changer : sinon `auth.json` devient illisible
+  et il faut réinstaller), `ATELIER_SETUP_CODE`. En local :
+  `npx vercel env pull .env.local`.
+- **Tester sans toucher aux vraies données** : `ATELIER_STORE_PREFIX=test-atelier`
+  (et un `ATELIER_SETUP_CODE` de test) au lancement de `next dev`, puis
+  supprimer le préfixe `test-atelier/` du magasin.
 
 ## 4. Architecture
 
@@ -80,6 +87,8 @@ src/app/
   (site)/cgu/ cgv/ mentions-legales/             Pages légales (composant LegalPage)
   admin/                Espace Atelier, avec sa propre barre (layout.tsx) :
                         tableau de bord, liste des toiles, fiche d'édition
+  api/atelier/[action]/ API de l'atelier (status, setup, login, logout, reset,
+                        password, artworks GET/PUT, upload)
   not-found.tsx  robots.ts  sitemap.ts
 src/components/
   scenes/HeroWall.tsx      Scène 1 : le mur de toiles qui défilent (accueil)
@@ -89,7 +98,7 @@ src/components/
   Section.tsx  PageHero.tsx  TornEdge.tsx   Briques de mise en page
   SiteHeader.tsx  SiteFooter.tsx  MobileCtaBar.tsx  BackToTop.tsx
   ArtCard.tsx  GalleryLightbox.tsx          Galerie et visionneuse
-  atelier/AtelierLogin.tsx   Connexion (création, oubli, lancement, GitHub)
+  atelier/AtelierLogin.tsx   Connexion (installation, clé de secours, oubli)
   atelier/ArtworkEditor.tsx  Fiche d'une toile (tous les champs de Artwork)
   atelier/ImageDrop.tsx      Photo : glisser-déposer, réduite à 1600 px en JPEG
   PriceCalculator.tsx  WallPreview.tsx  OrderForm.tsx   Simulateur et commande
@@ -97,15 +106,17 @@ src/components/
   LegalPage.tsx  icons.tsx
 src/lib/
   site.ts               Adresse du site, coordonnées, réseaux, waLink()
-  artworks.ts           Lecture de data/artworks.json (+ ratio de chaque image)
+  artworks.ts           Galerie : Vercel Blob, sinon data/artworks.json (+ ratio, vignette)
+  server/store.ts       Lecture / écriture Vercel Blob (galerie, photos, connexion chiffrée)
+  server/auth.ts        Mot de passe, clé de secours, sessions
+  atelier-api.ts        Appels du navigateur vers l'API de l'atelier
   image-size.ts         Lit largeur/hauteur des JPEG/PNG au build (serveur seulement)
   ratio.ts              canvasSize() : attributs width/height d'une toile
   use-scroll-progress.ts  Écrit la progression de défilement d'une scène dans --p
   pricing.ts / quote.ts Grille i-CAC et calcul de l'estimation
   testimonials.ts       Avis affichés (voir §7)
   events.ts             Agenda de la page Rendez-vous (vide = texte par défaut)
-  github.ts             Écriture via l'API GitHub, utilisée par /admin
-data/artworks.json      Source de vérité de la galerie (18 œuvres)
+data/artworks.json      Galerie d'origine (18 œuvres), utilisée tant que l'atelier n'a rien enregistré
 public/artworks/        Images des toiles ; public/artist/ : portrait
 ```
 
@@ -190,8 +201,10 @@ CSS** à partir de `--p`. Deux modes : `pin` (scène épinglée en `sticky`) et
    vignette a été produite, sinon l'image d'origine sert partout.
 8. **Prix** : l'estimation vient de la grille i-CAC (`lib/pricing.ts`) ; elle
    est toujours présentée comme indicative, le devis ferme vient de l'atelier.
-9. `/admin` : aucun mot de passe dans le code du site. Toute vérification se
-   fait dans `local-server.mjs` ; le client passe par `lib/atelier-api.ts`.
+9. `/admin` : aucun mot de passe ni secret dans le code. Toute vérification
+   se fait côté serveur (`lib/server/auth.ts`, `import "server-only"`) ; le
+   navigateur passe par `lib/atelier-api.ts`. Ne jamais changer
+   `ATELIER_SECRET` sans réinstaller l'atelier.
 
 ## 8. État actuel
 
@@ -285,3 +298,18 @@ visionneuse). Rien n'est enregistré avant « Enregistrer » ; alerte si on
 quitte une fiche modifiée. Sur téléphone, la fiche s'ouvre en plein écran.
 Test isolé possible : `ATELIER_PORT` (base) et `NEXT_PUBLIC_ATELIER_URL`
 (site) pour viser une copie de la base.
+
+### 1er octobre 2026 — Atelier 100 % en ligne
+
+Demande du propriétaire : rien sur son ordinateur. Suppression de la base
+locale (`local-server.mjs`, `atelier.command`, `atelier.bat`) et du mode
+GitHub de l'atelier. L'atelier tourne sur Vercel : API `app/api/atelier`,
+stockage Vercel Blob, connexion par mot de passe + clé de secours, mise en
+ligne immédiate à l'enregistrement (fin de `output: "export"`, pages
+régénérées par étiquette de cache). Les toiles d'origine restent servies
+depuis `public/artworks/` ; les nouvelles photos (1600 et 600 px) depuis Blob.
+Vérifié sur un préfixe de test : installation (mauvais code refusé), clé de
+secours, ajout d'une toile avec photo visible aussitôt dans la galerie
+publique, mot de passe oublié, ancien mot de passe refusé, API refusée sans
+session ou depuis une autre origine, réinstallation bloquée. Données de test
+supprimées ensuite.

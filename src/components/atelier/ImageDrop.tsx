@@ -2,13 +2,17 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-/** Côté le plus long d'une photo envoyée : net en grand, léger à charger. */
+/** Côté le plus long de la grande version : nette en plein écran. */
 const MAX_SIDE = 1600;
+/** Largeur de la version moyenne : murs de l'accueil, galerie, vignettes. */
+const MEDIUM_WIDTH = 600;
 const QUALITY = 0.86;
 
 export interface PreparedImage {
-  /** Contenu JPEG en base64 (sans préfixe data:). */
+  /** Grande version, JPEG en base64 (sans préfixe data:). */
   base64: string;
+  /** Version moyenne (600 px de large), JPEG en base64. */
+  medium: string;
   /** Aperçu local (URL objet) pour l'affichage immédiat. */
   preview: string;
   width: number;
@@ -19,9 +23,33 @@ export interface PreparedImage {
 
 /**
  * Prépare une photo de toile dans le navigateur : orientation corrigée,
- * réduite à 1600 px de côté au plus, convertie en JPEG. Une photo de
- * téléphone de 5 Mo devient un fichier d'environ 300 Ko.
+ * réduite à 1600 px de côté au plus, convertie en JPEG, avec une version
+ * moyenne de 600 px. Une photo de téléphone de 5 Mo devient environ 300 Ko.
  */
+async function encode(bitmap: ImageBitmap, width: number, height: number): Promise<Blob> {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Préparation de l'image impossible.");
+  ctx.fillStyle = "#fff"; // fond blanc sous les PNG transparents
+  ctx.fillRect(0, 0, width, height);
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Conversion impossible."))), "image/jpeg", QUALITY)
+  );
+}
+
+function toBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(",")[1] ?? "");
+    r.onerror = () => reject(new Error("Lecture de l'image impossible."));
+    r.readAsDataURL(blob);
+  });
+}
+
 async function prepare(file: File): Promise<PreparedImage> {
   if (!file.type.startsWith("image/")) throw new Error("Ce fichier n'est pas une image.");
   const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" }).catch(() => {
@@ -30,25 +58,14 @@ async function prepare(file: File): Promise<PreparedImage> {
   const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
   const width = Math.round(bitmap.width * scale);
   const height = Math.round(bitmap.height * scale);
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Préparation de l'image impossible.");
-  ctx.fillStyle = "#fff"; // fond blanc sous les PNG transparents
-  ctx.fillRect(0, 0, width, height);
-  ctx.drawImage(bitmap, 0, 0, width, height);
+  const mScale = Math.min(1, MEDIUM_WIDTH / bitmap.width);
+  const [blob, mediumBlob] = await Promise.all([
+    encode(bitmap, width, height),
+    encode(bitmap, Math.round(bitmap.width * mScale), Math.round(bitmap.height * mScale)),
+  ]);
   bitmap.close();
-  const blob: Blob = await new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Conversion impossible."))), "image/jpeg", QUALITY)
-  );
-  const base64 = await new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result).split(",")[1] ?? "");
-    r.onerror = () => reject(new Error("Lecture de l'image impossible."));
-    r.readAsDataURL(blob);
-  });
-  return { base64, preview: URL.createObjectURL(blob), width, height, bytes: blob.size };
+  const [base64, medium] = await Promise.all([toBase64(blob), toBase64(mediumBlob)]);
+  return { base64, medium, preview: URL.createObjectURL(blob), width, height, bytes: blob.size };
 }
 
 /**

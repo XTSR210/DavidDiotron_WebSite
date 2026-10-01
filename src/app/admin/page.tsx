@@ -1,25 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Artwork } from "@/lib/types";
-import { DEFAULT_REPO, getFileText, putFile, toBase64 } from "@/lib/github";
-import {
-  SessionExpired,
-  logout,
-  pendingPc,
-  publishPc,
-  readArtworksPc,
-  saveArtworksPc,
-  savedSession,
-} from "@/lib/atelier-api";
-import { AtelierLogin } from "@/components/atelier/AtelierLogin";
+import { SessionExpired, changePassword, logout, readGallery, saveGallery, uploadPhoto } from "@/lib/atelier-api";
+import { AtelierLogin, Message, PasswordField, RecoveryKey } from "@/components/atelier/AtelierLogin";
 import { ArtworkEditor } from "@/components/atelier/ArtworkEditor";
 import type { PreparedImage } from "@/components/atelier/ImageDrop";
-
-const TOKEN_KEY = "drioton-github-token";
-
-/** Connexion active : la base de l'ordinateur (session) ou le dépôt GitHub (clé). */
-type Link = { mode: "pc"; session: string } | { mode: "github"; token: string; sha: string | null };
 
 type Filter = "all" | "sale" | "quote" | "sold";
 const isPriced = (a: Artwork) => Boolean(a.priceEur && !a.priceOnRequest);
@@ -47,13 +33,11 @@ function useWide() {
 
 export default function AdminPage() {
   const wide = useWide();
-  const [link, setLink] = useState<Link | null>(null);
-  const [ready, setReady] = useState(false);
-  const [savedToken, setSavedToken] = useState<string | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
   const [notice, setNotice] = useState("");
+  const [settings, setSettings] = useState(false);
 
   const [artworks, setArtworks] = useState<Artwork[]>([]);
-  const [pending, setPending] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<{ text: string; error?: boolean } | null>(null);
 
@@ -62,48 +46,12 @@ export default function AdminPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
 
-  /* ------------------------------------------------------------- */
-  /* Ouverture : reprend une session encore valide                  */
-  /* ------------------------------------------------------------- */
-
-  useEffect(() => {
-    try {
-      setSavedToken(localStorage.getItem(TOKEN_KEY));
-    } catch {
-      /* stockage indisponible */
-    }
-    const session = savedSession();
-    if (!session) {
-      setReady(true);
-      return;
-    }
-    readArtworksPc(session)
-      .then((list) => {
-        setArtworks(list);
-        setLink({ mode: "pc", session });
-      })
-      .catch(() => {
-        /* session expirée ou base arrêtée : écran de connexion */
-      })
-      .finally(() => setReady(true));
-  }, []);
-
   // Le message disparaît seul après quelques secondes.
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), toast.error ? 9000 : 5000);
     return () => clearTimeout(t);
   }, [toast]);
-
-  const refreshPending = useCallback(async (l: Link | null) => {
-    if (l?.mode !== "pc") return setPending(null);
-    setPending(await pendingPc(l.session).catch(() => null));
-  }, []);
-
-  const pcSession = link?.mode === "pc" ? link.session : null;
-  useEffect(() => {
-    void refreshPending(pcSession ? { mode: "pc", session: pcSession } : null);
-  }, [pcSession, refreshPending]);
 
   // Fiche modifiée non enregistrée : on prévient avant de quitter la page.
   useEffect(() => {
@@ -113,82 +61,27 @@ export default function AdminPage() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
-  async function enterPc(session: string) {
-    setArtworks(await readArtworksPc(session));
-    setLink({ mode: "pc", session });
-  }
-
-  async function enterGithub(token: string) {
-    if (!token) throw new Error("Collez votre clé GitHub.");
-    const file = await getFileText(token, DEFAULT_REPO, "data/artworks.json").catch((e) => {
-      throw new Error(
-        /Bad credentials/i.test(String(e?.message))
-          ? "Clé GitHub refusée : elle est incorrecte ou a expiré."
-          : `GitHub : ${e?.message ?? "connexion impossible"}`
-      );
-    });
-    if (!file) throw new Error("Le fichier des œuvres est introuvable dans le dépôt.");
-    setArtworks(JSON.parse(file.text) as Artwork[]);
-    setLink({ mode: "github", token, sha: file.sha });
-    try {
-      localStorage.setItem(TOKEN_KEY, token);
-    } catch {
-      /* clé gardée le temps de la page */
-    }
-    setSavedToken(token);
+  async function enter() {
+    setArtworks(await readGallery());
+    setSignedIn(true);
   }
 
   async function signOut() {
     if (dirty && !window.confirm("La fiche ouverte n'est pas enregistrée. Se déconnecter quand même ?")) return;
-    if (link?.mode === "pc") await logout(link.session);
-    setLink(null);
+    await logout();
+    setSignedIn(false);
     setArtworks([]);
     setSelected(null);
     setDirty(false);
     setNotice("Vous êtes déconnecté.");
   }
 
-  function forgetGithubKey() {
-    try {
-      localStorage.removeItem(TOKEN_KEY);
-    } catch {
-      /* rien à oublier */
-    }
-    setSavedToken(null);
-    setLink(null);
-    setArtworks([]);
-    setNotice("La clé GitHub a été oubliée sur cet appareil.");
-  }
-
   /* ------------------------------------------------------------- */
-  /* Enregistrement : base de l'ordinateur ou dépôt GitHub          */
+  /* Enregistrement : en ligne, visible aussitôt sur le site        */
   /* ------------------------------------------------------------- */
 
-  /** Enregistre la liste complète, avec les nouvelles images éventuelles. */
-  async function commit(next: Artwork[], message: string, newImages: Record<string, string> = {}) {
-    if (!link) return;
-    if (link.mode === "pc") {
-      await saveArtworksPc(link.session, next, newImages);
-      setArtworks(next);
-      void refreshPending(link);
-      return;
-    }
-    for (const [name, b64] of Object.entries(newImages)) {
-      await putFile(link.token, DEFAULT_REPO, `public/artworks/${name}`, b64, `Photo de toile ${name}`);
-    }
-    await putFile(
-      link.token,
-      DEFAULT_REPO,
-      "data/artworks.json",
-      toBase64(`${JSON.stringify(next, null, 2)}\n`),
-      message,
-      link.sha ?? undefined
-    );
-    const fresh = await getFileText(link.token, DEFAULT_REPO, "data/artworks.json");
-    if (fresh) {
-      setArtworks(JSON.parse(fresh.text) as Artwork[]);
-      setLink({ ...link, sha: fresh.sha });
-    }
+  async function commit(next: Artwork[]) {
+    setArtworks(await saveGallery(next));
   }
 
   /** Exécute une action ; une session expirée ramène à l'écran de connexion. */
@@ -199,7 +92,7 @@ export default function AdminPage() {
       if (done) setToast({ text: done });
     } catch (e) {
       if (e instanceof SessionExpired) {
-        setLink(null);
+        setSignedIn(false);
         setNotice(e.message);
       } else {
         setToast({ text: e instanceof Error ? e.message : "Opération impossible.", error: true });
@@ -209,37 +102,30 @@ export default function AdminPage() {
     }
   }
 
-  const after = link?.mode === "github" ? " Le site en ligne se met à jour dans 1 à 2 minutes." : "";
 
   async function save(edited: Artwork, image: PreparedImage | null) {
     await run(async () => {
-      const newImages: Record<string, string> = {};
       let next = edited;
       if (image) {
-        // Nom unique à chaque photo : aucune ancienne version en cache ne s'affiche à la place.
-        const name = `${edited.id}-${Date.now().toString(36)}.jpg`;
-        newImages[name] = image.base64;
-        next = { ...edited, image: `/artworks/${name}` };
+        const sent = await uploadPhoto(edited.id, image.base64, image.medium);
+        next = { ...edited, image: sent.image, medium: sent.medium, thumb: sent.medium, ratio: image.width / image.height };
       }
       const exists = artworks.some((a) => a.id === next.id);
       const list = exists ? artworks.map((a) => (a.id === next.id ? next : a)) : [...artworks, next];
-      await commit(list, `${exists ? "Toile modifiée" : "Toile ajoutée"} : ${next.title}`, newImages);
+      await commit(list);
       setDirty(false);
       setSelected(next.id);
-      return `« ${next.title} » ${exists ? "enregistrée" : "ajoutée à la galerie"}.${after}`;
+      return `« ${next.title} » ${exists ? "enregistrée" : "ajoutée à la galerie"}. C'est en ligne.`;
     });
   }
 
   function remove(target: Artwork) {
     if (!window.confirm(`Supprimer « ${target.title} » de la galerie ?`)) return;
     void run(async () => {
-      await commit(
-        artworks.filter((a) => a.id !== target.id),
-        `Toile supprimée : ${target.title}`
-      );
+      await commit(artworks.filter((a) => a.id !== target.id));
       setDirty(false);
       setSelected(null);
-      return `« ${target.title} » supprimée.${after}`;
+      return `« ${target.title} » supprimée du site.`;
     });
   }
 
@@ -250,17 +136,9 @@ export default function AdminPage() {
     const next = [...artworks];
     [next[i], next[j]] = [next[j], next[i]];
     void run(async () => {
-      await commit(next, `Ordre de la galerie : ${artworks[i].title}`);
+      await commit(next);
     });
   }
-
-  const publish = () =>
-    run(async () => {
-      if (link?.mode !== "pc") return;
-      await publishPc(link.session);
-      await refreshPending(link);
-      return "Galerie publiée. Le site en ligne se met à jour dans 1 à 2 minutes.";
-    });
 
   function open(next: string | null) {
     if (next === selected) return;
@@ -303,24 +181,8 @@ export default function AdminPage() {
   /* Écrans                                                         */
   /* ------------------------------------------------------------- */
 
-  if (!ready) {
-    return (
-      <section className="bloc bloc-noir min-h-[60svh] py-20">
-        <p className="wrap soft">Ouverture de l'atelier…</p>
-      </section>
-    );
-  }
-
-  if (!link) {
-    return (
-      <AtelierLogin
-        key={notice}
-        notice={notice}
-        savedGithubToken={savedToken}
-        onSession={enterPc}
-        onGithub={enterGithub}
-      />
-    );
+  if (!signedIn) {
+    return <AtelierLogin key={notice} notice={notice} onSignedIn={enter} />;
   }
 
   const editor =
@@ -348,17 +210,13 @@ export default function AdminPage() {
               <h1 className="poster t-lg">L'atelier</h1>
               <p className="soft small mt-3 flex items-center gap-2">
                 <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-full bg-[#25d366]" />
-                {link.mode === "pc"
-                  ? "Base de cet ordinateur. Les changements restent ici jusqu'à la publication."
-                  : "Dépôt GitHub. Chaque changement part directement en ligne."}
+                En ligne. Chaque enregistrement apparaît aussitôt sur le site.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-              {link.mode === "github" ? (
-                <button type="button" onClick={forgetGithubKey} className="link small">
-                  Oublier la clé sur cet appareil
-                </button>
-              ) : null}
+              <button type="button" onClick={() => setSettings(true)} className="link small">
+                Changer le mot de passe
+              </button>
               <button type="button" onClick={() => void signOut()} className="btn btn-ghost btn-sm">
                 Se déconnecter
               </button>
@@ -381,37 +239,6 @@ export default function AdminPage() {
               </div>
             ))}
           </dl>
-
-          {link.mode === "pc" ? (
-            <div
-              className={`mt-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 border-2 p-4 ${
-                pending ? "border-[var(--jaune)]" : "border-[var(--line)]"
-              }`}
-            >
-              <p aria-live="polite">
-                {pending === null ? (
-                  <span className="soft">Publiez pour mettre le site en ligne à jour.</span>
-                ) : pending > 0 ? (
-                  <>
-                    <strong className="text-[var(--jaune)]">
-                      {pending} changement{pending > 1 ? "s" : ""} à publier.
-                    </strong>{" "}
-                    <span className="soft">Le site en ligne ne les montre pas encore.</span>
-                  </>
-                ) : (
-                  <span className="soft">Le site en ligne est à jour.</span>
-                )}
-              </p>
-              <button
-                type="button"
-                onClick={() => void publish()}
-                disabled={busy || pending === 0}
-                className={`btn btn-sm ${pending === 0 ? "btn-ghost" : ""}`}
-              >
-                {busy ? "Patientez…" : "Publier sur le site"}
-              </button>
-            </div>
-          ) : null}
         </div>
       </section>
 
@@ -470,7 +297,7 @@ export default function AdminPage() {
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={a.image}
+                          src={a.medium ?? a.image}
                           alt=""
                           loading="lazy"
                           className="max-h-full max-w-full object-contain shadow-[4px_4px_0_var(--noir)]"
@@ -548,6 +375,8 @@ export default function AdminPage() {
         </div>
       ) : null}
 
+      {settings ? <PasswordDialog onClose={() => setSettings(false)} onExpired={() => setSignedIn(false)} /> : null}
+
       {toast ? (
         <div
           role={toast.error ? "alert" : "status"}
@@ -569,5 +398,71 @@ export default function AdminPage() {
         </div>
       ) : null}
     </>
+  );
+}
+
+/** Changement de mot de passe (connecté) : donne aussi une nouvelle clé de secours. */
+function PasswordDialog({ onClose, onExpired }: { onClose: () => void; onExpired: () => void }) {
+  const [current, setCurrent] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [key, setKey] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !key && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [key, onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[110] grid place-items-center overflow-y-auto bg-[var(--noir)]/70 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Changer le mot de passe"
+    >
+      <div className="bloc bloc-noir panel w-full max-w-md">
+        <h2 className="poster t-md">{key ? "Nouvelle clé de secours" : "Changer le mot de passe"}</h2>
+        <div className="mt-6">
+          {key ? (
+            <RecoveryKey value={key} onDone={onClose} />
+          ) : (
+            <form
+              className="space-y-5"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setError("");
+                if (password.length < 8) return setError("Au moins 8 caractères.");
+                if (password !== confirm) return setError("Les deux mots de passe sont différents.");
+                setBusy(true);
+                try {
+                  setKey(await changePassword(current, password));
+                } catch (err) {
+                  if (err instanceof SessionExpired) onExpired();
+                  setError(err instanceof Error ? err.message : "Changement impossible.");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              <PasswordField label="Mot de passe actuel" value={current} onChange={setCurrent} autoComplete="current-password" autoFocus />
+              <PasswordField label="Nouveau mot de passe" value={password} onChange={setPassword} autoComplete="new-password" />
+              <PasswordField label="Confirmez-le" value={confirm} onChange={setConfirm} autoComplete="new-password" />
+              <Message error={error} />
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+                <button type="submit" className="btn" disabled={busy}>
+                  {busy ? "Enregistrement…" : "Changer"}
+                </button>
+                <button type="button" className="link small" onClick={onClose}>
+                  Annuler
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

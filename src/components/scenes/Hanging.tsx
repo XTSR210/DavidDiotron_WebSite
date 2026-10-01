@@ -87,7 +87,7 @@ export default function Hanging({ artworks, total }: { artworks: Artwork[]; tota
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     className="hang-canvas"
-                    src={a.image}
+                    src={a.medium ?? a.image}
                     alt={a.title}
                     {...canvasSize(a)}
                     loading="lazy"

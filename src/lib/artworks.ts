@@ -1,16 +1,27 @@
+import "server-only";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { unstable_cache } from "next/cache";
 import type { Artwork } from "./types";
-import { seedArtworks } from "./seed-artworks";
+import repoArtworks from "../../data/artworks.json";
 import { imageRatio } from "./image-size";
+import { readStoredArtworks } from "./server/store";
 
 /**
- * Single source of truth for the gallery: `data/artworks.json` in the project
- * root. Chaque œuvre reçoit aussi son `ratio` (largeur / hauteur), lu dans
- * le fichier image au moment du build, et sa vignette quand elle existe.
+ * Source de la galerie :
+ * 1. la galerie enregistrée depuis l'atelier (Vercel Blob) ;
+ * 2. à défaut, `data/artworks.json` du dépôt (toiles d'origine).
+ *
+ * Mise en cache sous l'étiquette « artworks » : l'atelier la vide à chaque
+ * enregistrement, et les pages du site se régénèrent aussitôt.
  */
-const DATA_DIR = path.join(process.cwd(), "data");
-const DATA_FILE = path.join(DATA_DIR, "artworks.json");
+export const ARTWORKS_TAG = "artworks";
+
+const loadList = unstable_cache(
+  async (): Promise<Artwork[]> => (await readStoredArtworks().catch(() => null)) ?? (repoArtworks as Artwork[]),
+  ["artworks-list"],
+  { tags: [ARTWORKS_TAG] }
+);
 
 /** Vignette produite par scripts/make-thumbs.mjs, si elle existe pour cette image. */
 async function thumbFor(image: string): Promise<string | undefined> {
@@ -24,30 +35,17 @@ async function thumbFor(image: string): Promise<string | undefined> {
   }
 }
 
-async function hang(list: Artwork[]): Promise<Artwork[]> {
+/** Complète chaque toile : format (ratio) et vignette, s'ils ne sont pas déjà connus. */
+export async function hang(list: Artwork[]): Promise<Artwork[]> {
   return Promise.all(
     list.map(async (a) => ({
       ...a,
-      ratio: await imageRatio(a.image),
-      thumb: await thumbFor(a.image),
+      ratio: a.ratio ?? (await imageRatio(a.image)),
+      thumb: a.thumb ?? a.medium ?? (await thumbFor(a.image)),
     }))
   );
 }
 
 export async function readArtworks(): Promise<Artwork[]> {
-  try {
-    const raw = await fs.readFile(DATA_FILE, "utf8");
-    const parsed = JSON.parse(raw);
-    const list = Array.isArray(parsed) && parsed.length > 0 ? parsed : seedArtworks;
-    return hang(list as Artwork[]);
-  } catch {
-    return hang(seedArtworks);
-  }
-}
-
-export async function writeArtworks(artworks: Artwork[]): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  // `ratio` et `thumb` sont recalculés à chaque build : on ne les enregistre pas.
-  const stored = artworks.map(({ ratio: _ratio, thumb: _thumb, ...a }) => a);
-  await fs.writeFile(DATA_FILE, `${JSON.stringify(stored, null, 2)}\n`, "utf8");
+  return hang(await loadList());
 }

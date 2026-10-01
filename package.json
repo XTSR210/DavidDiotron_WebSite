@@ -9,14 +9,14 @@
     "prebuild": "node scripts/make-thumbs.mjs",
     "build": "node scripts/build.mjs",
     "start": "next start",
-    "typecheck": "tsc --noEmit",
-    "atelier": "node local-server.mjs",
-    "atelier:mdp": "node local-server.mjs --set-password"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.0",
     "next": "^15.5.24",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

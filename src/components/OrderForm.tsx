@@ -194,7 +194,7 @@ function OrderFormInner({ artworks }: { artworks: Artwork[] }) {
                 onClick={() => setReferenceId(a.id)}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={a.image} alt="" loading="lazy" decoding="async" />
+                <img src={a.medium ?? a.image} alt="" loading="lazy" decoding="async" />
               </button>
             ))}
           </div>

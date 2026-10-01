@@ -22,10 +22,12 @@ export interface Artwork {
   source?: string;
   /** Free-form note shown under the title. */
   note?: string;
-  /** Rapport largeur / hauteur de l'image, calculé au build (jamais enregistré). */
+  /** Rapport largeur / hauteur de l'image (calculé au build, ou enregistré à l'envoi de la photo). */
   ratio?: number;
-  /** Vignette légère (280 px) pour les scènes sur téléphone, si elle existe (build). */
+  /** Vignette légère pour les scènes sur téléphone. */
   thumb?: string;
+  /** Version moyenne (600 px) pour les murs et la galerie ; `image` reste la grande. */
+  medium?: string;
 }
 
 /** A commission order placed from the order page. */

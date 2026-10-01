@@ -24,7 +24,7 @@ export default function CanvasFan({ artworks }: { artworks: Artwork[] }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={slot}
-            src={a.image}
+            src={a.medium ?? a.image}
             alt=""
             {...canvasSize(a)}
             loading="lazy"

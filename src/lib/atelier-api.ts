@@ -1,107 +1,45 @@
 import type { Artwork } from "./types";
 
 /**
- * Client de la base de l'atelier (local-server.mjs, sur l'ordinateur de
- * l'artiste). Toutes les écritures passent par une session ouverte avec le
- * mot de passe ; le mot de passe lui-même n'est jamais gardé par le navigateur.
+ * Client de l'API de l'atelier (src/app/api/atelier), hébergée sur Vercel avec
+ * le site. La session est un cookie httpOnly : le navigateur ne garde ni le
+ * mot de passe ni la session lisible par un script.
  */
-
-// Variable d'environnement : uniquement pour tester sur une copie de la base.
-export const ATELIER_URL = process.env.NEXT_PUBLIC_ATELIER_URL || "http://localhost:3311";
-const SESSION_KEY = "drioton-atelier-session";
 
 export class SessionExpired extends Error {}
 
-export type BaseState =
-  | { kind: "checking" }
-  | { kind: "off" }
-  | { kind: "on"; configured: boolean };
-
-/** La base répond-elle, et un mot de passe a-t-il déjà été créé ? */
-export async function probeBase(): Promise<BaseState> {
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 2500);
-    const r = await fetch(`${ATELIER_URL}/health`, { signal: ctrl.signal, cache: "no-store" });
-    clearTimeout(timer);
-    const d = await r.json();
-    return d?.ok ? { kind: "on", configured: Boolean(d.configured) } : { kind: "off" };
-  } catch {
-    return { kind: "off" };
-  }
-}
-
-export function savedSession(): string | null {
-  try {
-    return sessionStorage.getItem(SESSION_KEY);
-  } catch {
-    return null;
-  }
-}
-
-function keepSession(token: string | null) {
-  try {
-    if (token) sessionStorage.setItem(SESSION_KEY, token);
-    else sessionStorage.removeItem(SESSION_KEY);
-  } catch {
-    /* navigation privée : la session vit le temps de la page */
-  }
-}
-
-async function call<T>(route: string, body: unknown, token?: string | null): Promise<T> {
+async function call<T>(method: "GET" | "POST" | "PUT", action: string, body?: unknown): Promise<T> {
   let r: Response;
   try {
-    r = await fetch(`${ATELIER_URL}${route}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(body ?? {}),
+    r = await fetch(`/api/atelier/${action}/`, {
+      method,
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw new Error("La base de l'atelier ne répond plus. Vérifiez qu'elle tourne toujours sur l'ordinateur.");
+    throw new Error("Connexion internet interrompue. Réessayez.");
   }
   const d = await r.json().catch(() => ({}));
-  if (r.status === 401 && token) {
-    keepSession(null);
-    throw new SessionExpired(d.error || "Session expirée : reconnectez-vous.");
-  }
+  if (r.status === 401) throw new SessionExpired(d.error || "Session expirée : reconnectez-vous.");
+  if (r.status === 413) throw new Error("Photo trop lourde pour l'envoi.");
   if (!r.ok || !d.ok) throw new Error(d.error || `Erreur ${r.status}`);
   return d as T;
 }
 
-/** Ouvre une session (connexion, création ou réinitialisation) et la retient. */
-async function open(route: string, body: unknown): Promise<string> {
-  const { token } = await call<{ token: string }>(route, body);
-  keepSession(token);
-  return token;
-}
+export const status = () => call<{ configured: boolean; signedIn: boolean; storage: boolean }>("GET", "status");
+export const setup = (code: string, password: string) =>
+  call<{ recoveryKey: string }>("POST", "setup", { code, password }).then((d) => d.recoveryKey);
+export const login = (password: string) => call("POST", "login", { password });
+export const logout = () => call("POST", "logout").catch(() => {});
+export const reset = (recoveryKey: string, password: string) =>
+  call<{ recoveryKey: string }>("POST", "reset", { recoveryKey, password }).then((d) => d.recoveryKey);
+export const changePassword = (current: string, password: string) =>
+  call<{ recoveryKey: string }>("POST", "password", { current, password }).then((d) => d.recoveryKey);
 
-export const login = (password: string) => open("/api/login", { password });
-export const setup = (password: string) => open("/api/setup", { password });
-export const finishReset = (code: string, password: string) =>
-  open("/api/reset/finish", { code, password });
-export const startReset = () => call("/api/reset/start", {});
-
-export async function logout(token: string) {
-  keepSession(null);
-  await call("/api/logout", {}, token).catch(() => {});
-}
-
-export async function readArtworksPc(token: string): Promise<Artwork[]> {
-  return (await call<{ artworks: Artwork[] }>("/api/read", {}, token)).artworks;
-}
-
-export async function saveArtworksPc(token: string, artworks: Artwork[], images: Record<string, string> = {}) {
-  await call("/api/save", { artworks, images }, token);
-}
-
-export async function publishPc(token: string): Promise<string> {
-  return (await call<{ message: string }>("/api/publish", {}, token)).message;
-}
-
-/** Nombre de fichiers modifiés sur l'ordinateur et pas encore publiés (null : inconnu). */
-export async function pendingPc(token: string): Promise<number | null> {
-  return (await call<{ pending: number | null }>("/api/pending", {}, token)).pending;
-}
+export const readGallery = () => call<{ artworks: Artwork[] }>("GET", "artworks").then((d) => d.artworks);
+export const saveGallery = (artworks: Artwork[]) =>
+  call<{ artworks: Artwork[] }>("PUT", "artworks", { artworks }).then((d) => d.artworks);
+export const uploadPhoto = (name: string, full: string, medium: string) =>
+  call<{ image: string; medium: string }>("POST", "upload", { name, full, medium });

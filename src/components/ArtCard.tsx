@@ -35,7 +35,7 @@ export function ArtCard({ artwork, index = 0 }: { artwork: Artwork; index?: numb
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           className="oeuvre-img"
-          src={artwork.image}
+          src={artwork.medium ?? artwork.image}
           alt={artwork.title}
           {...canvasSize(artwork)}
           loading={index < 6 ? "eager" : "lazy"}

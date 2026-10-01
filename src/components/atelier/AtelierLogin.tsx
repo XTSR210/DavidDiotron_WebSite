@@ -2,23 +2,14 @@
 
 import { useEffect, useId, useState } from "react";
 import { BrushIcon } from "@/components/icons";
-import {
-  type BaseState,
-  finishReset,
-  login,
-  probeBase,
-  setup,
-  startReset,
-} from "@/lib/atelier-api";
+import { login, reset, setup, status } from "@/lib/atelier-api";
 
 const MIN_PASSWORD = 8;
-const GITHUB_TOKEN_URL =
-  "https://github.com/settings/personal-access-tokens/new?description=Atelier%20David%20Drioton";
 
-type View = "password" | "forgot" | "start" | "github";
+type View = "loading" | "setup" | "login" | "forgot" | "key";
 
 /** Champ mot de passe avec bouton Afficher / Masquer. */
-function PasswordField({
+export function PasswordField({
   label,
   value,
   onChange,
@@ -72,7 +63,7 @@ function PasswordField({
   );
 }
 
-function Message({ error, info }: { error?: string; info?: string }) {
+export function Message({ error, info }: { error?: string; info?: string }) {
   if (error) {
     return (
       <p role="alert" className="border-l-4 border-[var(--magenta)] pl-3 font-semibold">
@@ -91,57 +82,85 @@ function Message({ error, info }: { error?: string; info?: string }) {
 }
 
 /**
- * Écran d'entrée de l'espace Atelier.
- * - Sur l'ordinateur de l'atelier : mot de passe (création au premier passage,
- *   récupération par un code affiché dans la fenêtre de la base).
- * - Ailleurs : connexion au dépôt GitHub avec un jeton.
+ * Clé de secours affichée une seule fois : à noter avant d'entrer dans l'atelier.
+ * Elle remplace un mot de passe oublié.
  */
-export function AtelierLogin({
-  onSession,
-  onGithub,
-  savedGithubToken,
-  notice,
-}: {
-  onSession: (token: string) => Promise<void>;
-  onGithub: (token: string) => Promise<void>;
-  savedGithubToken: string | null;
-  notice?: string;
-}) {
-  const [base, setBase] = useState<BaseState>({ kind: "checking" });
-  const [view, setView] = useState<View>("password");
+export function RecoveryKey({ value, onDone }: { value: string; onDone: () => void }) {
+  const [kept, setKept] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const download = () => {
+    const text = `Atelier David Drioton — clé de secours\n\n${value}\n\nElle permet de choisir un nouveau mot de passe si vous l'oubliez :\nespace Atelier, « Mot de passe oublié ? ».\nGardez-la en lieu sûr. Une nouvelle clé est créée à chaque changement de mot de passe.\n`;
+    const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
+    const a = Object.assign(document.createElement("a"), { href: url, download: "atelier-cle-de-secours.txt" });
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  return (
+    <div className="space-y-5">
+      <p className="soft">
+        Si vous oubliez votre mot de passe, cette clé permet d'en choisir un nouveau. Elle ne
+        s'affichera plus : notez-la sur papier, ou enregistrez-la.
+      </p>
+      <p className="select-all border-2 border-[var(--jaune)] p-4 text-center text-2xl font-bold tracking-[0.12em] tabular-nums">
+        {value}
+      </p>
+      <div className="flex flex-wrap gap-x-5 gap-y-3">
+        <button
+          type="button"
+          className="btn btn-sm btn-ghost"
+          onClick={async () => {
+            await navigator.clipboard.writeText(value).catch(() => {});
+            setCopied(true);
+          }}
+        >
+          {copied ? "Copiée" : "Copier"}
+        </button>
+        <button type="button" className="btn btn-sm btn-ghost" onClick={download}>
+          Enregistrer en fichier
+        </button>
+      </div>
+      <label className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          checked={kept}
+          onChange={(e) => setKept(e.target.checked)}
+          className="mt-1 h-5 w-5 accent-[var(--jaune)]"
+        />
+        <span>J'ai noté ma clé de secours en lieu sûr.</span>
+      </label>
+      <button type="button" className="btn w-full" disabled={!kept} onClick={onDone}>
+        Continuer
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Écran d'entrée de l'espace Atelier, entièrement en ligne (Vercel).
+ * - Première fois : code d'installation + choix du mot de passe.
+ * - Ensuite : mot de passe.
+ * - Oubli : clé de secours + nouveau mot de passe.
+ */
+export function AtelierLogin({ onSignedIn, notice }: { onSignedIn: () => Promise<void>; notice?: string }) {
+  const [view, setView] = useState<View>("loading");
+  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [code, setCode] = useState("");
-  const [codeSent, setCodeSent] = useState(false);
-  const [token, setToken] = useState("");
+  const [recovery, setRecovery] = useState("");
+  const [newKey, setNewKey] = useState("");
   const [error, setError] = useState("");
   const [info, setInfo] = useState(notice ?? "");
   const [busy, setBusy] = useState(false);
 
-  const check = async () => {
-    setBase({ kind: "checking" });
-    const state = await probeBase();
-    setBase(state);
-    if (state.kind === "off") setView((v) => (v === "github" ? v : "start"));
-    if (state.kind === "on") setView((v) => (v === "start" ? "password" : v));
-  };
-
   useEffect(() => {
-    void check();
+    status()
+      .then((s) => (s.signedIn ? onSignedIn() : setView(s.configured ? "login" : "setup")))
+      .catch((e) => {
+        setError(e instanceof Error ? e.message : "L'atelier ne répond pas.");
+        setView("login");
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Base pas encore lancée : on la guette, la page se connecte dès qu'elle répond.
-  useEffect(() => {
-    if (base.kind !== "off") return;
-    const timer = setInterval(async () => {
-      const state = await probeBase();
-      if (state.kind === "on") {
-        setBase(state);
-        setView((v) => (v === "start" ? "password" : v));
-      }
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [base.kind]);
 
   const go = (next: View) => {
     setView(next);
@@ -149,7 +168,7 @@ export function AtelierLogin({
     setInfo("");
     setPassword("");
     setConfirm("");
-    setCode("");
+    setRecovery("");
   };
 
   async function run(action: () => Promise<void>) {
@@ -170,249 +189,99 @@ export function AtelierLogin({
     if (password !== confirm) throw new Error("Les deux mots de passe sont différents.");
   };
 
-  const configured = base.kind === "on" && base.configured;
-  const onLocalSite =
-    typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
-
-  /* ------------------------------------------------ contenu ---- */
+  const passwordHint = `Au moins ${MIN_PASSWORD} caractères. Une phrase courte est plus facile à retenir.`;
 
   let title: string;
   let body: React.ReactNode;
 
-  if (base.kind === "checking") {
+  if (view === "loading") {
     title = "Ouverture de l'atelier";
-    body = <p className="soft">Recherche de la base de l'atelier sur cet ordinateur…</p>;
-  } else if (view === "start") {
-    title = "Lancez l'atelier";
+    body = <p className="soft">Un instant…</p>;
+  } else if (view === "key") {
+    title = "Votre clé de secours";
+    body = <RecoveryKey value={newKey} onDone={() => void run(onSignedIn)} />;
+  } else if (view === "setup") {
+    title = "Installation de l'atelier";
     body = (
-      <div className="space-y-6">
-        <ol className="space-y-4">
-          <li className="grid grid-cols-[2.5rem_1fr] items-baseline gap-x-3">
-            <span className="poster t-md text-[var(--jaune)]">1.</span>
-            <span>
-              Sur l'ordinateur de l'atelier, ouvrez le dossier du site{" "}
-              <strong>DavidDrioton</strong> (sur le Bureau).
-            </span>
-          </li>
-          <li className="grid grid-cols-[2.5rem_1fr] items-baseline gap-x-3">
-            <span className="poster t-md text-[var(--jaune)]">2.</span>
-            <span>
-              Double-cliquez sur <strong>atelier.command</strong> (Mac) ou{" "}
-              <strong>atelier.bat</strong> (Windows). Une fenêtre s'ouvre : laissez-la ouverte.
-            </span>
-          </li>
-          <li className="grid grid-cols-[2.5rem_1fr] items-baseline gap-x-3">
-            <span className="poster t-md text-[var(--jaune)]">3.</span>
-            <span>C'est tout : cette page se connecte d'elle-même dès que la base répond.</span>
-          </li>
-        </ol>
-        <p className="soft small flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-[var(--jaune)]" />
-          En attente de la base de l'atelier…
-        </p>
-        {!onLocalSite ? (
-          <p className="faint small">
-            Sur Safari, ouvrez plutôt la version de l'atelier lancée sur l'ordinateur :{" "}
-            <a className="link" href="http://localhost:3210/admin/">
-              localhost:3210/admin
-            </a>
-            .
-          </p>
-        ) : null}
-        <button type="button" className="link small" onClick={() => go("github")}>
-          Je ne suis pas sur l'ordinateur de l'atelier
-        </button>
-      </div>
-    );
-  } else if (view === "github") {
-    title = "Depuis un autre appareil";
-    body = (
-      <>
-        <div>
-          <p className="soft">
-            Sans la base, vous pouvez modifier la galerie directement sur GitHub, avec une clé
-            d'accès (« jeton »). Aucun mot de passe n'est nécessaire.
-          </p>
-          {savedGithubToken ? (
-            <button
-              type="button"
-              className="btn mt-5 w-full"
-              disabled={busy}
-              onClick={() => run(() => onGithub(savedGithubToken))}
-            >
-              {busy ? "Connexion…" : "Continuer avec la clé enregistrée"}
-            </button>
-          ) : null}
-          <form
-            className="mt-5 space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void run(() => onGithub(token.trim()));
-            }}
-          >
-            <label className="field-label">
-              {savedGithubToken ? "Ou une nouvelle clé GitHub" : "Clé GitHub"}
-              <input
-                type="password"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="github_pat_…"
-                className="field mt-2 font-normal"
-                required
-              />
-            </label>
-            <Message error={error} info={info} />
-            <button type="submit" className="btn btn-ghost w-full" disabled={busy || !token.trim()}>
-              Se connecter avec cette clé
-            </button>
-          </form>
-          <details className="faq-item mt-6 !border-t-0">
-            <summary className="!py-3 !text-base">
-              Créer une clé GitHub
-              <span className="faq-plus" aria-hidden="true" />
-            </summary>
-            <ol className="soft small list-decimal space-y-1.5 pb-4 pl-5">
-              <li>
-                Ouvrez{" "}
-                <a className="link" href={GITHUB_TOKEN_URL} target="_blank" rel="noopener noreferrer">
-                  la page de création de clé
-                </a>{" "}
-                (connecté au compte GitHub du site).
-              </li>
-              <li>Dépôt : choisissez seulement « DavidDiotron_WebSite ».</li>
-              <li>Autorisation « Contents » : « Read and write ».</li>
-              <li>Créez la clé, copiez-la et collez-la ci-dessus. Elle reste sur cet appareil.</li>
-            </ol>
-          </details>
-        </div>
-        <button
-          type="button"
-          className="link small mt-6"
-          onClick={() => go(base.kind === "on" ? "password" : "start")}
-        >
-          {base.kind === "on" ? "Revenir au mot de passe de l'atelier" : "Revenir au lancement de l'atelier"}
-        </button>
-      </>
-    );
-  } else if (view === "forgot") {
-    title = "Mot de passe oublié";
-    body = !codeSent ? (
-      <div className="space-y-5">
-        <p className="soft">
-          Un code à 6 chiffres va s'afficher dans la fenêtre de la base de l'atelier (la fenêtre
-          noire « Atelier – Base de données », ou le Terminal sur Mac), sur cet ordinateur. Personne
-          d'autre ne peut le voir.
-        </p>
-        <Message error={error} info={info} />
-        <button
-          type="button"
-          className="btn w-full"
-          disabled={busy}
-          onClick={() =>
-            run(async () => {
-              await startReset();
-              setCodeSent(true);
-            })
-          }
-        >
-          {busy ? "Envoi…" : "Afficher un code sur l'ordinateur"}
-        </button>
-        <button type="button" className="link small" onClick={() => go("password")}>
-          Je me souviens du mot de passe
-        </button>
-      </div>
-    ) : (
       <form
         className="space-y-5"
         onSubmit={(e) => {
           e.preventDefault();
           void run(async () => {
             newPasswordOk();
-            await onSession(await finishReset(code.trim(), password));
+            setNewKey(await setup(code, password));
+            setView("key");
           });
         }}
       >
         <p className="soft">
-          Recopiez le code affiché dans la fenêtre de la base (valable 10 minutes), puis choisissez
-          votre nouveau mot de passe.
+          Première ouverture. Saisissez le code d'installation qui vous a été remis, puis
+          choisissez votre mot de passe.
         </p>
         <label className="field-label">
-          Code à 6 chiffres
+          Code d'installation
           <input
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="\d{6}"
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            autoComplete="off"
+            spellCheck={false}
             required
             autoFocus
-            className="field mt-2 text-center text-2xl font-bold tracking-[0.4em] tabular-nums"
+            placeholder="XXXX-XXXX"
+            className="field mt-2 font-bold tracking-[0.15em]"
           />
         </label>
-        <PasswordField
-          label="Nouveau mot de passe"
-          value={password}
-          onChange={setPassword}
-          autoComplete="new-password"
-          hint={`Au moins ${MIN_PASSWORD} caractères. Une phrase courte est plus facile à retenir.`}
-        />
-        <PasswordField
-          label="Confirmez-le"
-          value={confirm}
-          onChange={setConfirm}
-          autoComplete="new-password"
-        />
-        <Message error={error} info={info} />
-        <button type="submit" className="btn w-full" disabled={busy}>
-          {busy ? "Enregistrement…" : "Changer le mot de passe et entrer"}
-        </button>
-        <button
-          type="button"
-          className="link small"
-          disabled={busy}
-          onClick={() =>
-            run(async () => {
-              await startReset();
-              setInfo("Nouveau code affiché sur l'ordinateur.");
-            })
-          }
-        >
-          Afficher un autre code
-        </button>
-      </form>
-    );
-  } else if (!configured) {
-    title = "Créez votre mot de passe";
-    body = (
-      <form
-        className="space-y-5"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void run(async () => {
-            newPasswordOk();
-            await onSession(await setup(password));
-          });
-        }}
-      >
-        <p className="soft">
-          Première ouverture de l'atelier sur cet ordinateur. Ce mot de passe protège la galerie ;
-          il est enregistré chiffré, uniquement ici. En cas d'oubli, vous pourrez le remplacer
-          depuis cet ordinateur.
-        </p>
-        <PasswordField
-          label="Mot de passe"
-          value={password}
-          onChange={setPassword}
-          autoComplete="new-password"
-          autoFocus
-          hint={`Au moins ${MIN_PASSWORD} caractères. Une phrase courte est plus facile à retenir.`}
-        />
+        <PasswordField label="Mot de passe" value={password} onChange={setPassword} autoComplete="new-password" hint={passwordHint} />
         <PasswordField label="Confirmez-le" value={confirm} onChange={setConfirm} autoComplete="new-password" />
         <Message error={error} info={info} />
         <button type="submit" className="btn w-full" disabled={busy}>
-          {busy ? "Création…" : "Créer et entrer dans l'atelier"}
+          {busy ? "Installation…" : "Créer mon mot de passe"}
+        </button>
+      </form>
+    );
+  } else if (view === "forgot") {
+    title = "Mot de passe oublié";
+    body = (
+      <form
+        className="space-y-5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void run(async () => {
+            newPasswordOk();
+            setNewKey(await reset(recovery, password));
+            setView("key");
+          });
+        }}
+      >
+        <p className="soft">
+          Saisissez la clé de secours notée lors de l'installation (ou du dernier changement de
+          mot de passe), puis choisissez un nouveau mot de passe.
+        </p>
+        <label className="field-label">
+          Clé de secours
+          <input
+            value={recovery}
+            onChange={(e) => setRecovery(e.target.value.toUpperCase())}
+            autoComplete="off"
+            spellCheck={false}
+            required
+            autoFocus
+            placeholder="XXXX-XXXX-XXXX-XXXX"
+            className="field mt-2 font-bold tracking-[0.12em]"
+          />
+        </label>
+        <PasswordField label="Nouveau mot de passe" value={password} onChange={setPassword} autoComplete="new-password" hint={passwordHint} />
+        <PasswordField label="Confirmez-le" value={confirm} onChange={setConfirm} autoComplete="new-password" />
+        <Message error={error} info={info} />
+        <button type="submit" className="btn w-full" disabled={busy}>
+          {busy ? "Enregistrement…" : "Changer le mot de passe"}
+        </button>
+        <p className="faint small">
+          Clé de secours perdue elle aussi ? Demandez un nouveau code d'installation à la personne
+          qui gère le site.
+        </p>
+        <button type="button" className="link small" onClick={() => go("login")}>
+          Je me souviens du mot de passe
         </button>
       </form>
     );
@@ -423,59 +292,37 @@ export function AtelierLogin({
         className="space-y-5"
         onSubmit={(e) => {
           e.preventDefault();
-          void run(async () => onSession(await login(password)));
+          void run(async () => {
+            await login(password);
+            await onSignedIn();
+          });
         }}
       >
         {/* Champ caché : aide le gestionnaire de mots de passe à reconnaître le compte. */}
         <input type="text" name="username" value="atelier" autoComplete="username" readOnly hidden />
-        <PasswordField
-          label="Mot de passe"
-          value={password}
-          onChange={setPassword}
-          autoComplete="current-password"
-          autoFocus
-        />
+        <PasswordField label="Mot de passe" value={password} onChange={setPassword} autoComplete="current-password" autoFocus />
         <Message error={error} info={info} />
         <button type="submit" className="btn w-full" disabled={busy}>
           {busy ? "Vérification…" : "Entrer"}
         </button>
-        <div className="flex flex-wrap justify-between gap-x-6 gap-y-3">
-          <button type="button" className="link small" onClick={() => go("forgot")}>
-            Mot de passe oublié ?
-          </button>
-          <button type="button" className="link small" onClick={() => go("github")}>
-            Passer par GitHub
-          </button>
-        </div>
+        <button type="button" className="link small" onClick={() => go("forgot")}>
+          Mot de passe oublié ?
+        </button>
       </form>
     );
   }
 
   return (
-    <section className="bloc bloc-noir halftone min-h-[calc(100svh-var(--header-h))] py-[clamp(2.5rem,7vw,5rem)]">
+    <section className="bloc bloc-noir halftone min-h-[calc(100svh-4rem)] py-[clamp(2.5rem,7vw,5rem)]">
       <div className="wrap relative grid grid-cols-1 items-start gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]">
         <div>
           <BrushIcon className="h-10 w-10 text-[var(--jaune)]" />
           <h1 className="poster t-page mt-5">L'atelier</h1>
           <p className="lead soft mt-6 max-w-md">
-            L'espace privé de David : ajouter une toile, fixer un prix, marquer une œuvre vendue,
-            puis publier la galerie.
-          </p>
-          <p className="small faint mt-6 flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className={`inline-block h-2.5 w-2.5 rounded-full ${
-                base.kind === "on" ? "bg-[#25d366]" : base.kind === "off" ? "bg-[var(--magenta)]" : "bg-[var(--fg-faint)]"
-              }`}
-            />
-            {base.kind === "on"
-              ? "Base de l'atelier : connectée sur cet ordinateur"
-              : base.kind === "off"
-                ? "Base de l'atelier : introuvable sur cet appareil"
-                : "Recherche de la base…"}
+            L'espace privé de David : ajouter une toile, fixer un prix, marquer une œuvre vendue.
+            Chaque changement apparaît aussitôt sur le site.
           </p>
         </div>
-
         <div className="panel bg-[var(--noir)]">
           <h2 className="poster t-md">{title}</h2>
           <div className="mt-6">{body}</div>

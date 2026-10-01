@@ -46,7 +46,7 @@ export default function HeroWall({ artworks }: { artworks: Artwork[] }) {
                       {a.thumb ? <source media="(max-width: 640px)" srcSet={a.thumb} type="image/webp" /> : null}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={a.image}
+                        src={a.medium ?? a.image}
                         alt=""
                         {...canvasSize(a)}
                         // Chargement immédiat : le différé se déclenche mal sur un plan en 3D.

@@ -275,7 +275,7 @@ export default async function ArtistPage() {
               <Link href={{ pathname: "/order", query: { ref: a.id } }} className="hang-link">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={a.image}
+                  src={a.medium ?? a.image}
                   alt={a.title}
                   {...canvasSize(a)}
                   loading="lazy"

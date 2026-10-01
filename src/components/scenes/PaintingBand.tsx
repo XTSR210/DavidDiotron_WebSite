@@ -14,7 +14,7 @@ function Row({ items, className }: { items: Artwork[]; className: string }) {
         <picture key={`${a.id}-${i}`}>
           {a.thumb ? <source media="(max-width: 640px)" srcSet={a.thumb} type="image/webp" /> : null}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={a.image} alt="" {...canvasSize(a)} loading="lazy" decoding="async" draggable={false} />
+          <img src={a.medium ?? a.image} alt="" {...canvasSize(a)} loading="lazy" decoding="async" draggable={false} />
         </picture>
       ))}
     </div>

@@ -49,8 +49,14 @@ function number(raw: string, label: string, { integer = false, min = 0, max = In
 function build(base: Artwork | undefined, d: Draft, image: string): Artwork {
   if (!d.title.trim()) throw new Error("Il faut un titre.");
   const out: Artwork = { ...(base ?? { id: `art-${Date.now().toString(36)}` }), title: d.title.trim(), image };
-  for (const k of ["technique", "widthCm", "heightCm", "year", "priceEur", "priceOnRequest", "sold", "note", "ratio", "thumb"] as const) {
+  for (const k of ["technique", "widthCm", "heightCm", "year", "priceEur", "priceOnRequest", "sold", "note"] as const) {
     delete out[k];
+  }
+  // Nouvelle image : son format et ses versions réduites seront recalculés.
+  if (base && base.image !== image) {
+    delete out.ratio;
+    delete out.thumb;
+    delete out.medium;
   }
   if (d.technique.trim()) out.technique = d.technique.trim();
   const w = number(d.widthCm, "Largeur", { integer: true, min: 1, max: 1000 });
