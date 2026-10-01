@@ -36,7 +36,7 @@ const execFileP = promisify(execFile);
 const scrypt = promisify(crypto.scrypt);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = 3311;
+const PORT = Number(process.env.ATELIER_PORT) || 3311; // autre port : copie de test
 const DATA_FILE = path.join(__dirname, "data", "artworks.json");
 const AUTH_FILE = path.join(__dirname, "data", ".atelier-auth.json");
 const ARTWORKS_DIR = path.join(__dirname, "public", "artworks");
@@ -312,6 +312,21 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/logout") {
       sessions.delete(token);
       return send(res, 200, { ok: true });
+    }
+
+    // Changements enregistrés sur l'ordinateur mais pas encore publiés.
+    if (url.pathname === "/api/pending") {
+      try {
+        const { stdout } = await execFileP(
+          "git",
+          ["status", "--porcelain", "--", "data/artworks.json", "public/artworks"],
+          { cwd: __dirname, timeout: 15000 }
+        );
+        const files = stdout.split("\n").filter((l) => l.trim() && !l.includes("public/artworks/wall/"));
+        return send(res, 200, { ok: true, pending: files.length });
+      } catch {
+        return send(res, 200, { ok: true, pending: null });
+      }
     }
 
     if (url.pathname === "/api/read") {

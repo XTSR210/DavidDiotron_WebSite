@@ -165,6 +165,7 @@ export function GalleryLightbox({
                   </span>
                 ) : null}
               </p>
+              {artwork.note ? <p className="soft small mt-1 max-w-xl">{artwork.note}</p> : null}
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
               <a

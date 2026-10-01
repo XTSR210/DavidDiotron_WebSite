@@ -72,12 +72,14 @@ un terminal : `npm run atelier:mdp`.
 
 ```
 src/app/
-  layout.tsx            Police, métadonnées, en-tête, pied de page, script data-anim
+  layout.tsx            Police, métadonnées, JSON-LD, script data-anim (rien de visible)
+  (site)/layout.tsx     En-tête, pied de page, barre mobile des pages publiques
   globals.css           Tout le système visuel (jetons, blocs, scènes, composants)
-  page.tsx              Accueil : enchaînement des scènes et des blocs
-  artiste/ gallery/ order/ rendez-vous/   Pages publiques
-  cgu/ cgv/ mentions-legales/             Pages légales (composant LegalPage)
-  admin/                Panneau privé de l'artiste (ajout d'œuvres) — logique à ne pas casser
+  (site)/page.tsx       Accueil : enchaînement des scènes et des blocs
+  (site)/artiste/ gallery/ order/ rendez-vous/   Pages publiques
+  (site)/cgu/ cgv/ mentions-legales/             Pages légales (composant LegalPage)
+  admin/                Espace Atelier, avec sa propre barre (layout.tsx) :
+                        tableau de bord, liste des toiles, fiche d'édition
   not-found.tsx  robots.ts  sitemap.ts
 src/components/
   scenes/HeroWall.tsx      Scène 1 : le mur de toiles qui défilent (accueil)
@@ -87,6 +89,9 @@ src/components/
   Section.tsx  PageHero.tsx  TornEdge.tsx   Briques de mise en page
   SiteHeader.tsx  SiteFooter.tsx  MobileCtaBar.tsx  BackToTop.tsx
   ArtCard.tsx  GalleryLightbox.tsx          Galerie et visionneuse
+  atelier/AtelierLogin.tsx   Connexion (création, oubli, lancement, GitHub)
+  atelier/ArtworkEditor.tsx  Fiche d'une toile (tous les champs de Artwork)
+  atelier/ImageDrop.tsx      Photo : glisser-déposer, réduite à 1600 px en JPEG
   PriceCalculator.tsx  WallPreview.tsx  OrderForm.tsx   Simulateur et commande
   commercial.tsx           CtaBanner, Guarantees, Testimonials, Faq, ProjectStrip
   LegalPage.tsx  icons.tsx
@@ -264,3 +269,19 @@ suppression de `basePath`, `assetPath()` et des contournements de `/admin`.
 L'ancienne adresse GitHub Pages redirige vers Vercel en gardant la page
 demandée. La base de l'atelier accepte désormais `david-drioton.vercel.app`
 au lieu de `xtsr210.github.io`.
+
+### 1er octobre 2026 — Espace Atelier professionnel
+
+L'espace Atelier a sa propre barre (les pages publiques passent dans le
+groupe de routes `app/(site)/`). Tableau de bord : nombre de toiles,
+disponibles, vendues, total des prix affichés, et compteur des changements
+pas encore publiés (`/api/pending` de la base, d'après `git status`). Liste
+en vignettes avec recherche, filtres (prix fixe, sur devis, vendues) et
+flèches pour régler l'ordre de la galerie. Fiche complète par toile : photo
+par glisser-déposer (réduite à 1600 px dans le navigateur, nom de fichier
+unique à chaque remplacement), titre, technique avec suggestions,
+dimensions, année, prix fixe ou sur devis, statut, note (affichée dans la
+visionneuse). Rien n'est enregistré avant « Enregistrer » ; alerte si on
+quitte une fiche modifiée. Sur téléphone, la fiche s'ouvre en plein écran.
+Test isolé possible : `ATELIER_PORT` (base) et `NEXT_PUBLIC_ATELIER_URL`
+(site) pour viser une copie de la base.

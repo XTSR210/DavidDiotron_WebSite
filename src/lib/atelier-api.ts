@@ -6,7 +6,8 @@ import type { Artwork } from "./types";
  * mot de passe ; le mot de passe lui-même n'est jamais gardé par le navigateur.
  */
 
-export const ATELIER_URL = "http://localhost:3311";
+// Variable d'environnement : uniquement pour tester sur une copie de la base.
+export const ATELIER_URL = process.env.NEXT_PUBLIC_ATELIER_URL || "http://localhost:3311";
 const SESSION_KEY = "drioton-atelier-session";
 
 export class SessionExpired extends Error {}
@@ -98,4 +99,9 @@ export async function saveArtworksPc(token: string, artworks: Artwork[], images:
 
 export async function publishPc(token: string): Promise<string> {
   return (await call<{ message: string }>("/api/publish", {}, token)).message;
+}
+
+/** Nombre de fichiers modifiés sur l'ordinateur et pas encore publiés (null : inconnu). */
+export async function pendingPc(token: string): Promise<number | null> {
+  return (await call<{ pending: number | null }>("/api/pending", {}, token)).pending;
 }

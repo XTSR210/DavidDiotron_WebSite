@@ -1,9 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/SiteFooter";
-import { BackToTop } from "@/components/BackToTop";
-import { MobileCtaBar } from "@/components/MobileCtaBar";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -100,13 +96,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }),
           }}
         />
-        <SiteHeader />
-        <main id="contenu" className="site-main">
-          {children}
-        </main>
-        <SiteFooter />
-        <BackToTop />
-        <MobileCtaBar />
+        {/* En-tête et pied de page : app/(site)/layout.tsx (le site) et app/admin (l'atelier). */}
+        {children}
       </body>
     </html>
   );
