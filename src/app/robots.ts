@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
 
-// Requis pour l'export statique (GitHub Pages).
+// Requis pour l'export statique.
 export const dynamic = "force-static";
 
 /** Laisse les robots explorer tout le site. */

@@ -6,7 +6,6 @@ import { Section } from "@/components/Section";
 import { CtaBanner, Faq } from "@/components/commercial";
 import { HandIcon, PaletteIcon, ScissorsIcon } from "@/components/icons";
 import { canvasSize } from "@/lib/ratio";
-import { assetPath } from "@/lib/site";
 import { readArtworks } from "@/lib/artworks";
 
 export const metadata = {
@@ -133,7 +132,7 @@ export default async function ArtistPage() {
         aside={
           <div className="bloc-jaune duotone mx-auto w-full max-w-sm lg:max-w-none">
             <Image
-              src={assetPath("/artist/david-drioton.jpg")}
+              src="/artist/david-drioton.jpg"
               alt="Portrait de David Drioton"
               width={700}
               height={700}

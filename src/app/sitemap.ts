@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
 
-// Requis pour l'export statique (GitHub Pages).
+// Requis pour l'export statique.
 export const dynamic = "force-static";
 
-/** Sitemap pour les moteurs de recherche (GitHub Pages inclus). */
+/** Sitemap pour les moteurs de recherche. */
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const pages = [
@@ -18,7 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "cgv", priority: 0.2 },
   ];
   return pages.map((p) => ({
-    url: `${site.url}/${p.path}`.replace(/\/$/, ""),
+    url: p.path ? `${site.url}/${p.path}/` : `${site.url}/`,
     lastModified: now,
     changeFrequency: "monthly" as const,
     priority: p.priority,

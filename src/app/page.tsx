@@ -7,7 +7,7 @@ import { PriceCalculator } from "@/components/PriceCalculator";
 import { Section } from "@/components/Section";
 import { CtaBanner, Faq, Guarantees, Testimonials, hasTestimonials } from "@/components/commercial";
 import { InstagramIcon } from "@/components/icons";
-import { assetPath, site } from "@/lib/site";
+import { site } from "@/lib/site";
 import { readArtworks } from "@/lib/artworks";
 
 const figures = [
@@ -75,7 +75,7 @@ export default async function HomePage() {
         <div className="grid grid-cols-1 items-center gap-x-16 gap-y-12 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)]">
           <div className="duotone mx-auto w-full max-w-sm lg:max-w-none">
             <Image
-              src={assetPath("/artist/david-drioton.jpg")}
+              src="/artist/david-drioton.jpg"
               alt="Portrait de David Drioton"
               width={700}
               height={700}

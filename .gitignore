@@ -18,3 +18,5 @@ avant-refonte-*.tar.gz
 
 # Vignettes générées avant chaque build (scripts/make-thumbs.mjs)
 public/artworks/wall/
+.vercel
+.env*

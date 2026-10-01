@@ -1,16 +1,13 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { Artwork } from "./types";
-import { assetPath } from "./site";
 import { seedArtworks } from "./seed-artworks";
 import { imageRatio } from "./image-size";
 
 /**
  * Single source of truth for the gallery: `data/artworks.json` in the project
- * root. Sur GitHub Pages (build statique), les chemins d'images sont préfixés
- * avec le basePath pour pointer au bon endroit ; en local, ils restent tels
- * quels. Chaque œuvre reçoit aussi son `ratio` (largeur / hauteur), lu dans
- * le fichier image au moment du build.
+ * root. Chaque œuvre reçoit aussi son `ratio` (largeur / hauteur), lu dans
+ * le fichier image au moment du build, et sa vignette quand elle existe.
  */
 const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "artworks.json");
@@ -21,7 +18,7 @@ async function thumbFor(image: string): Promise<string | undefined> {
   const thumb = `/artworks/wall/${path.parse(image).name}.webp`;
   try {
     await fs.access(path.join(process.cwd(), "public", thumb));
-    return assetPath(thumb);
+    return thumb;
   } catch {
     return undefined;
   }
@@ -33,7 +30,6 @@ async function hang(list: Artwork[]): Promise<Artwork[]> {
       ...a,
       ratio: await imageRatio(a.image),
       thumb: await thumbFor(a.image),
-      image: assetPath(a.image),
     }))
   );
 }

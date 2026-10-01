@@ -7,7 +7,7 @@
     "predev": "node scripts/make-thumbs.mjs",
     "dev": "next dev",
     "prebuild": "node scripts/make-thumbs.mjs",
-    "build": "next build",
+    "build": "node scripts/build.mjs",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "atelier": "node local-server.mjs",

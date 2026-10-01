@@ -15,21 +15,6 @@ import { AtelierLogin } from "@/components/atelier/AtelierLogin";
 import { CanvasCheckIcon } from "@/components/icons";
 
 const TOKEN_KEY = "drioton-github-token";
-/** Chemin du site déployé sur GitHub Pages (sous-dossier) ou raciné en local. */
-const DEPLOY_BASE = "/DavidDiotron_WebSite";
-
-/** Préfixe les chemins d'images quand on est déployé sous un sous-dossier. */
-function publicImage(p: string): string {
-  if (
-    typeof window !== "undefined" &&
-    window.location.pathname.startsWith(DEPLOY_BASE + "/") &&
-    p.startsWith("/")
-  ) {
-    return DEPLOY_BASE + p;
-  }
-  return p;
-}
-
 /** Connexion active : la base de l'ordinateur (session) ou le dépôt GitHub (clé). */
 type Link = { mode: "pc"; session: string } | { mode: "github"; token: string; sha: string | null };
 
@@ -406,18 +391,10 @@ export default function AdminPage() {
               <li key={a.id} className="flex gap-4 border-b border-[var(--line)] py-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={publicImage(a.image)}
+                  src={a.image}
                   alt=""
                   loading="lazy"
                   className="h-20 w-14 shrink-0 bg-[var(--line)] object-cover"
-                  onError={(e) => {
-                    const img = e.currentTarget;
-                    if (img.dataset.retried) return;
-                    img.dataset.retried = "1";
-                    img.src = img.src.includes(DEPLOY_BASE)
-                      ? img.src.replace(DEPLOY_BASE, "")
-                      : DEPLOY_BASE + img.getAttribute("src");
-                  }}
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold">{a.title}</p>

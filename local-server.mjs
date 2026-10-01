@@ -52,7 +52,8 @@ const LOCK_MS = 10 * 60 * 1000;
 /** Sites autorisés à appeler la base depuis un navigateur. */
 const ALLOWED_ORIGINS = [
   /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
-  /^https:\/\/xtsr210\.github\.io$/i,
+  // Site en ligne (Vercel). Adresses exactes : un autre projet Vercel ne passe pas.
+  /^https:\/\/david-drioton\.vercel\.app$/i,
 ];
 
 /* ------------------------------------------------------------------ */

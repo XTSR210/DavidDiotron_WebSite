@@ -9,7 +9,7 @@ export const site = {
   name: "David Drioton",
   tagline: "Artiste peintre · Provence",
   /** URL publique du site (utilisée pour le SEO / Open Graph). */
-  url: "https://xtsr210.github.io/DavidDiotron_WebSite",
+  url: "https://david-drioton.vercel.app",
   location: "Barjols, Var (PACA)",
   /** Adresse réelle de l'atelier (bio Instagram + Saatchi Art). */
   address: "12 rue Pierre Curie — 83670 Barjols, Var (PACA)",
@@ -42,16 +42,4 @@ export const currentYear = () => new Date().getFullYear();
 export function waLink(text: string): string {
   const num = site.whatsapp.replace(/[^0-9]/g, "");
   return `https://wa.me/${num}?text=${encodeURIComponent(text)}`;
-}
-
-/**
- * Préfixe un chemin d'image (ex. "/artworks/art-01.jpg") avec le basePath
- * de GitHub Pages lors du build de déploiement, pour que les images se
- * retrouvent au bon endroit : https://<user>.github.io/DavidDiotron_WebSite/…
- */
-export function assetPath(p: string): string {
-  if (process.env.GITHUB_PAGES === "true" && p.startsWith("/")) {
-    return "/DavidDiotron_WebSite" + p;
-  }
-  return p;
 }

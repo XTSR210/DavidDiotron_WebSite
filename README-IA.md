@@ -22,8 +22,8 @@ pilotées au défilement).
 |---|---|---|
 | Framework | **Next.js 15** (App Router), React 19, TypeScript strict | |
 | Rendu | **Export 100 % statique** (`output: "export"`) | Aucun serveur, aucune route API, aucune action serveur |
-| Hébergement | **GitHub Pages**, dépôt `xtsr210/DavidDiotron_WebSite` | Déploiement automatique à chaque push sur `main` (`.github/workflows/deploy.yml`) |
-| Sous-dossier | `basePath = /DavidDiotron_WebSite` quand `GITHUB_PAGES=true` | Toujours `next/link` pour les liens internes et `assetPath()` pour les fichiers de `public/` |
+| Hébergement | **Vercel**, projet `david-drioton` (équipe Ecomsia) → https://david-drioton.vercel.app | Relié au dépôt `XTSR210/DavidDiotron_WebSite` : chaque push sur `main` redéploie |
+| Ancienne adresse | GitHub Pages (`xtsr210.github.io/DavidDiotron_WebSite`) | Ne fait plus que rediriger vers Vercel en gardant la page demandée : le workflow existant lance `npm run build` avec `GITHUB_PAGES=true`, et `scripts/build.mjs` publie alors `.github/redirect/` au lieu du site |
 | Style | Tailwind CSS v4 + classes maison dans `src/app/globals.css` | Voir §5 |
 | Police | Bricolage Grotesque (variable, axes `wdth` + `opsz`) via `next/font` | Une seule famille pour tout le site |
 | Dépendances UI | Aucune | Icônes SVG maison (`components/icons.tsx`), animations en CSS |
@@ -38,7 +38,7 @@ npm run typecheck    # à passer avant de livrer
 npx vitest run       # tests de la grille de prix
 npm run thumbs       # vignettes téléphone (lancé tout seul avant dev et build)
 npm run build        # export statique dans out/
-GITHUB_PAGES=true npm run build   # même build que la mise en ligne
+npx vercel deploy --prod           # mise en ligne manuelle (sinon : push sur main)
 ```
 
 Aperçu dans Claude Code : configuration `site` de `.claude/launch.json` (port 3210).
@@ -64,7 +64,8 @@ un terminal : `npm run atelier:mdp`.
 - **Ailleurs** (base injoignable) : connexion au dépôt GitHub avec une clé
   personnelle « Contents : Read and write », gardée dans `localStorage`.
 - La base n'accepte que les appels venant de `localhost` et de
-  `xtsr210.github.io` (CORS + contrôle de l'origine). Safari bloque l'appel du
+  `david-drioton.vercel.app` (CORS + contrôle de l'origine ; à compléter si
+  un nom de domaine est ajouté). Safari bloque l'appel du
   site en ligne vers `localhost` : passer par `http://localhost:3210/admin/`.
 
 ## 4. Architecture
@@ -90,7 +91,7 @@ src/components/
   commercial.tsx           CtaBanner, Guarantees, Testimonials, Faq, ProjectStrip
   LegalPage.tsx  icons.tsx
 src/lib/
-  site.ts               Coordonnées, réseaux, waLink(), assetPath()
+  site.ts               Adresse du site, coordonnées, réseaux, waLink()
   artworks.ts           Lecture de data/artworks.json (+ ratio de chaque image)
   image-size.ts         Lit largeur/hauteur des JPEG/PNG au build (serveur seulement)
   ratio.ts              canvasSize() : attributs width/height d'une toile
@@ -163,8 +164,8 @@ CSS** à partir de `--p`. Deux modes : `pin` (scène épinglée en `sticky`) et
 1. **Site statique** : pas d'API, pas d'action serveur, pas de `node:*` dans
    un composant client. `lib/artworks.ts` et `lib/image-size.ts` sont réservés
    au serveur ; côté client, utiliser `lib/ratio.ts`.
-2. **Liens internes** avec `next/link` (sinon le `basePath` GitHub Pages saute) ;
-   fichiers de `public/` avec `assetPath()`.
+2. **Liens internes** avec `next/link`. Le site est servi à la racine du
+   domaine : chemins de `public/` écrits tels quels (`/artworks/…`).
 3. **Aucune donnée inventée présentée comme réelle.** `lib/testimonials.ts`
    ne doit contenir que de vrais avis, avec l'accord de leur auteur ; liste
    vide = section masquée.
@@ -253,3 +254,13 @@ atelier:mdp`, et `noindex` sur `/admin/`. Vérifié de bout en bout sur une copi
 de la base : création, déconnexion, mauvais mot de passe, code oublié,
 rechargement de page, ajout d'une toile avec prix, refus d'une origine
 étrangère et d'un appel sans session.
+
+### 1er octobre 2026 — Passage de GitHub Pages à Vercel
+
+Hébergement déplacé sur Vercel (projet `david-drioton`, équipe Ecomsia),
+relié au dépôt GitHub : un push sur `main`, y compris le bouton « Publier »
+de l'atelier, redéploie le site. Fin du sous-dossier `/DavidDiotron_WebSite` :
+suppression de `basePath`, `assetPath()` et des contournements de `/admin`.
+L'ancienne adresse GitHub Pages redirige vers Vercel en gardant la page
+demandée. La base de l'atelier accepte désormais `david-drioton.vercel.app`
+au lieu de `xtsr210.github.io`.

@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BackToTop } from "@/components/BackToTop";
 import { MobileCtaBar } from "@/components/MobileCtaBar";
-import { assetPath, site } from "@/lib/site";
+import { site } from "@/lib/site";
 import "./globals.css";
 
 // Une seule famille pour tout le site : étroite et grasse pour les titres
@@ -32,10 +32,10 @@ export const metadata: Metadata = {
   description:
     "Atelier de David Drioton, artiste peintre pop art et contemporain à Barjols (Var, PACA). Découvrez ses œuvres et commandez une pièce sur mesure.",
   icons: {
-    icon: assetPath("/icon.svg"),
-    apple: assetPath("/apple-touch-icon.png"),
+    icon: "/icon.svg",
+    apple: "/apple-touch-icon.png",
   },
-  manifest: assetPath("/manifest.webmanifest"),
+  manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
     locale: "fr_FR",
