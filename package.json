@@ -9,7 +9,9 @@
     "prebuild": "node scripts/make-thumbs.mjs",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "atelier": "node local-server.mjs",
+    "atelier:mdp": "node local-server.mjs --set-password"
   },
   "dependencies": {
     "next": "^15.5.24",

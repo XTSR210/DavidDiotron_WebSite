@@ -3,15 +3,18 @@
 import { useEffect, useState } from "react";
 import type { Artwork } from "@/lib/types";
 import { DEFAULT_REPO, getFileText, putFile, toBase64 } from "@/lib/github";
-import { BrushIcon, CanvasCheckIcon } from "@/components/icons";
+import {
+  SessionExpired,
+  logout,
+  publishPc,
+  readArtworksPc,
+  saveArtworksPc,
+  savedSession,
+} from "@/lib/atelier-api";
+import { AtelierLogin } from "@/components/atelier/AtelierLogin";
+import { CanvasCheckIcon } from "@/components/icons";
 
-// Mot de passe d'accès à l'atelier (identique côté serveur local).
-const ADMIN_PASSWORD = "atelier-2026";
-const PASSWORD_KEY = "drioton-admin-ok";
 const TOKEN_KEY = "drioton-github-token";
-
-/** Serveur local (base de données du PC), interrogé uniquement en local. */
-const LOCAL_SERVER = "http://localhost:3311";
 /** Chemin du site déployé sur GitHub Pages (sous-dossier) ou raciné en local. */
 const DEPLOY_BASE = "/DavidDiotron_WebSite";
 
@@ -27,28 +30,28 @@ function publicImage(p: string): string {
   return p;
 }
 
-type Mode = "pc" | "github";
+/** Connexion active : la base de l'ordinateur (session) ou le dépôt GitHub (clé). */
+type Link = { mode: "pc"; session: string } | { mode: "github"; token: string; sha: string | null };
+
+function readFileBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve((r.result as string).split(",")[1] ?? "");
+    r.onerror = () => reject(new Error("Lecture de l'image impossible."));
+    r.readAsDataURL(file);
+  });
+}
 
 export default function AdminPage() {
-  const [authed, setAuthed] = useState(false);
-  const [pw, setPw] = useState("");
-  const [pwError, setPwError] = useState("");
+  const [link, setLink] = useState<Link | null>(null);
+  const [ready, setReady] = useState(false);
+  const [savedToken, setSavedToken] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
 
-  // Mode PC (serveur local)
-  const [pcState, setPcState] = useState<"checking" | "on" | "off">("checking");
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [publishMsg, setPublishMsg] = useState("");
-
-  // Mode GitHub (secours quand le PC n'est pas joignable)
-  const [mode, setMode] = useState<Mode>("pc");
-  const [token, setToken] = useState("");
-  const [hasSavedToken, setHasSavedToken] = useState(false);
-  const [connected, setConnected] = useState(false);
-  const [jsonSha, setJsonSha] = useState<string | null>(null);
-  const [needsToken, setNeedsToken] = useState(false);
 
   const [title, setTitle] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -57,138 +60,143 @@ export default function AdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState("");
 
-  const inputCls =
-    "w-full rounded-lg border border-white/15 bg-[var(--ink-soft)] px-3 py-2 text-sm outline-none focus:border-[var(--amber)]";
+  /* ------------------------------------------------------------- */
+  /* Ouverture : reprend une session encore valide                  */
+  /* ------------------------------------------------------------- */
 
   useEffect(() => {
-    if (sessionStorage.getItem(PASSWORD_KEY) === "1") setAuthed(true);
-    const saved = localStorage.getItem(TOKEN_KEY);
-    if (saved) {
-      setToken(saved);
-      setHasSavedToken(true);
+    try {
+      setSavedToken(localStorage.getItem(TOKEN_KEY));
+    } catch {
+      /* stockage indisponible */
     }
-  }, []);
-
-  // Détection du serveur local dès l'ouverture de la page.
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`${LOCAL_SERVER}/health`, { mode: "cors" })
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d) => {
-        if (!cancelled && d?.ok) setPcState("on");
+    const session = savedSession();
+    if (!session) {
+      setReady(true);
+      return;
+    }
+    readArtworksPc(session)
+      .then((list) => {
+        setArtworks(list);
+        setLink({ mode: "pc", session });
       })
       .catch(() => {
-        if (!cancelled) setPcState("off");
-      });
-    return () => {
-      cancelled = true;
-    };
+        /* session expirée ou base arrêtée : écran de connexion */
+      })
+      .finally(() => setReady(true));
   }, []);
 
-  /* ------------------------------------------------------------- */
-  /* Chargement des œuvres selon le mode                            */
-  /* ------------------------------------------------------------- */
-
-  async function loadLocal(password: string) {
-    const r = await fetch(`${LOCAL_SERVER}/api/read`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pw: password }),
-    });
-    const d = await r.json();
-    if (!r.ok || !d.ok) throw new Error(d.error || "Lecture impossible sur le PC.");
-    setArtworks(d.artworks as Artwork[]);
-    setMode("pc");
-    setConnected(false);
+  async function enterPc(session: string) {
+    setArtworks(await readArtworksPc(session));
+    setLink({ mode: "pc", session });
     setStatus("");
     setError("");
   }
 
-  async function connectGithub() {
-    setStatus("");
+  async function enterGithub(token: string) {
+    if (!token) throw new Error("Collez votre clé GitHub.");
+    const file = await getFileText(token, DEFAULT_REPO, "data/artworks.json").catch((e) => {
+      throw new Error(
+        /Bad credentials/i.test(String(e?.message))
+          ? "Clé GitHub refusée : elle est incorrecte ou a expiré."
+          : `GitHub : ${e?.message ?? "connexion impossible"}`
+      );
+    });
+    if (!file) throw new Error("Le fichier des œuvres est introuvable dans le dépôt.");
+    setArtworks(JSON.parse(file.text) as Artwork[]);
+    setLink({ mode: "github", token, sha: file.sha });
+    try {
+      localStorage.setItem(TOKEN_KEY, token);
+    } catch {
+      /* clé gardée le temps de la page */
+    }
+    setSavedToken(token);
+  }
+
+  async function signOut() {
+    if (link?.mode === "pc") await logout(link.session);
+    setLink(null);
+    setArtworks([]);
+    setNotice("Vous êtes déconnecté.");
+  }
+
+  function forgetGithubKey() {
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+    } catch {
+      /* rien à oublier */
+    }
+    setSavedToken(null);
+    setLink(null);
+    setArtworks([]);
+    setNotice("La clé GitHub a été oubliée sur cet appareil.");
+  }
+
+  /* ------------------------------------------------------------- */
+  /* Enregistrement : base de l'ordinateur ou dépôt GitHub          */
+  /* ------------------------------------------------------------- */
+
+  /** Enregistre la liste complète, avec les nouvelles images éventuelles. */
+  async function commit(next: Artwork[], message: string, newImages: Record<string, string> = {}) {
+    if (!link) return;
+    if (link.mode === "pc") {
+      await saveArtworksPc(link.session, next, newImages);
+      setArtworks(next);
+      return;
+    }
+    for (const [name, b64] of Object.entries(newImages)) {
+      await putFile(link.token, DEFAULT_REPO, `public/artworks/${name}`, b64, `Nouvelle œuvre ${name}`);
+    }
+    await putFile(
+      link.token,
+      DEFAULT_REPO,
+      "data/artworks.json",
+      toBase64(`${JSON.stringify(next, null, 2)}\n`),
+      message,
+      link.sha ?? undefined
+    );
+    const fresh = await getFileText(link.token, DEFAULT_REPO, "data/artworks.json");
+    if (fresh) {
+      setArtworks(JSON.parse(fresh.text) as Artwork[]);
+      setLink({ ...link, sha: fresh.sha });
+    }
+  }
+
+  /** Exécute une action ; une session expirée ramène à l'écran de connexion. */
+  async function run(action: () => Promise<string | void>) {
     setError("");
+    setStatus("");
     setBusy(true);
     try {
-      const file = await getFileText(token.trim(), DEFAULT_REPO, "data/artworks.json");
-      if (!file) throw new Error("Le fichier des œuvres est introuvable dans le dépôt.");
-      setArtworks(JSON.parse(file.text) as Artwork[]);
-      setJsonSha(file.sha);
-      setMode("github");
-      setConnected(true);
-      setNeedsToken(false);
-      localStorage.setItem(TOKEN_KEY, token.trim());
+      const done = await action();
+      if (done) setStatus(done);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Connexion impossible.");
-      setNeedsToken(true);
-      setHasSavedToken(false);
+      if (e instanceof SessionExpired) {
+        setLink(null);
+        setNotice(e.message);
+      } else {
+        setError(e instanceof Error ? e.message : "Opération impossible.");
+      }
     } finally {
       setBusy(false);
     }
   }
 
-  /* ------------------------------------------------------------- */
-  /* Écriture locale (PC) : images + JSON en une requête            */
-  /* ------------------------------------------------------------- */
+  const live = link?.mode === "github" ? "site en ligne à jour dans 2 minutes environ" : "sur cet ordinateur";
 
-  async function saveLocal(next: Artwork[], newImages: Record<string, string> = {}) {
-    const r = await fetch(`${LOCAL_SERVER}/api/save`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        pw: pw || ADMIN_PASSWORD,
-        artworks: next,
-        images: newImages,
-      }),
-    });
-    const d = await r.json();
-    if (!r.ok || !d.ok) throw new Error(d.error || "Enregistrement impossible sur le PC.");
-    setArtworks(next);
-  }
-
-  function readFileBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve((r.result as string).split(",")[1] ?? "");
-      r.onerror = () => reject(new Error("Lecture de l'image impossible."));
-      r.readAsDataURL(file);
-    });
-  }
-
-  /* ------------------------------------------------------------- */
-  /* Actions : ajout, suppression, prix, statut, publication        */
-  /* ------------------------------------------------------------- */
-
-  async function add(e: React.FormEvent) {
+  const add = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setStatus("");
-    setBusy(true);
-    try {
+    void run(async () => {
       if (!title.trim()) throw new Error("Il faut un titre.");
-      if (!imageFile && !imageUrl.trim())
-        throw new Error("Ajoutez une image (fichier) ou une URL d'image.");
+      if (!imageFile && !imageUrl.trim()) throw new Error("Ajoutez une photo ou l'adresse d'une image.");
 
       const id = `art-${Date.now().toString(36)}`;
       const newImages: Record<string, string> = {};
       let image: string;
-
       if (imageFile) {
         const ext = (imageFile.name.split(".").pop() || "jpg").toLowerCase();
-        const b64 = await readFileBase64(imageFile);
-        if (mode === "pc") {
-          newImages[`${id}.${ext}`] = b64;
-          image = `/artworks/${id}.${ext}`;
-        } else {
-          // Mode GitHub (secours) : envoi du fichier via l'API GitHub.
-          await putFile(
-            token.trim(),
-            DEFAULT_REPO,
-            `public/artworks/${id}.${ext}`,
-            b64,
-            `Nouvelle œuvre ${id}`
-          );
-          image = `/artworks/${id}.${ext}`;
-        }
+        newImages[`${id}.${ext}`] = await readFileBase64(imageFile);
+        image = `/artworks/${id}.${ext}`;
       } else {
         image = imageUrl.trim();
       }
@@ -202,516 +210,277 @@ export default function AdminPage() {
         artwork.priceEur = value;
       }
 
-      const next = [...artworks, artwork];
-      if (mode === "pc") {
-        await saveLocal(next, newImages);
-        setStatus(`« ${artwork.title} » ajoutée sur votre PC ✓ (visible en local immédiatement)`);
-      } else {
-        await putFile(
-          token.trim(),
-          DEFAULT_REPO,
-          "data/artworks.json",
-          toBase64(`${JSON.stringify(next, null, 2)}\n`),
-          `Œuvre ajoutée : ${artwork.title}`,
-          jsonSha ?? undefined
-        );
-        const fresh = await getFileText(token.trim(), DEFAULT_REPO, "data/artworks.json");
-        if (fresh) {
-          setArtworks(JSON.parse(fresh.text) as Artwork[]);
-          setJsonSha(fresh.sha);
-        }
-        setStatus(`« ${artwork.title} » ajoutée sur GitHub ✓ — site en ligne à jour (≈ 2 min)`);
-      }
+      await commit([...artworks, artwork], `Œuvre ajoutée : ${artwork.title}`, newImages);
       setTitle("");
       setImageUrl("");
       setImageFile(null);
       setPrice("");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Ajout impossible.");
-    } finally {
-      setBusy(false);
-    }
-  }
+      (e.target as HTMLFormElement).reset();
+      return `« ${artwork.title} » ajoutée, ${live}.`;
+    });
+  };
 
-  async function remove(id: string) {
+  const remove = (id: string) => {
     const target = artworks.find((a) => a.id === id);
-    if (!target || !window.confirm(`Supprimer « ${target.title} » ?`)) return;
-    setError("");
-    setStatus("");
-    setBusy(true);
-    try {
-      const next = artworks.filter((a) => a.id !== id);
-      if (mode === "pc") {
-        await saveLocal(next);
-        setStatus(`« ${target.title} » supprimée sur votre PC ✓`);
-      } else {
-        await putFile(
-          token.trim(),
-          DEFAULT_REPO,
-          "data/artworks.json",
-          toBase64(`${JSON.stringify(next, null, 2)}\n`),
-          `Œuvre supprimée : ${target.title}`,
-          jsonSha ?? undefined
-        );
-        const fresh = await getFileText(token.trim(), DEFAULT_REPO, "data/artworks.json");
-        if (fresh) {
-          setArtworks(JSON.parse(fresh.text) as Artwork[]);
-          setJsonSha(fresh.sha);
-        }
-        setStatus(`« ${target.title} » supprimée sur GitHub ✓`);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Suppression impossible.");
-    } finally {
-      setBusy(false);
-    }
-  }
+    if (!target || !window.confirm(`Supprimer « ${target.title} » de la galerie ?`)) return;
+    void run(async () => {
+      await commit(
+        artworks.filter((a) => a.id !== id),
+        `Œuvre supprimée : ${target.title}`
+      );
+      return `« ${target.title} » supprimée, ${live}.`;
+    });
+  };
 
-  async function savePrice(id: string) {
+  const savePrice = (id: string) => {
     const target = artworks.find((a) => a.id === id);
     if (!target) return;
-    setError("");
-    setStatus("");
     const raw = editPrice.trim();
     const value = raw === "" ? null : Number(raw.replace(",", "."));
     if (raw !== "" && (!Number.isFinite(value) || (value as number) < 0)) {
       setError("Prix invalide : entrez un nombre (ex. 950) ou laissez vide.");
       return;
     }
-    setBusy(true);
-    try {
+    void run(async () => {
       const next = artworks.map((a) => {
         if (a.id !== id) return a;
         const updated = { ...a };
-        if (value === null) {
-          delete updated.priceEur;
-          delete updated.priceOnRequest;
-        } else {
-          updated.priceEur = value as number;
-          delete updated.priceOnRequest;
-        }
+        delete updated.priceOnRequest;
+        if (value === null) delete updated.priceEur;
+        else updated.priceEur = value;
         return updated;
       });
-      if (mode === "pc") {
-        await saveLocal(next);
-      } else {
-        await putFile(
-          token.trim(),
-          DEFAULT_REPO,
-          "data/artworks.json",
-          toBase64(`${JSON.stringify(next, null, 2)}\n`),
-          `Tarif fixé : ${target.title}${value ? ` — ${value} €` : " — sur devis"}`,
-          jsonSha ?? undefined
-        );
-        const fresh = await getFileText(token.trim(), DEFAULT_REPO, "data/artworks.json");
-        if (fresh) {
-          setArtworks(JSON.parse(fresh.text) as Artwork[]);
-          setJsonSha(fresh.sha);
-        }
-      }
+      await commit(next, `Tarif fixé : ${target.title}${value ? ` — ${value} €` : " — sur devis"}`);
       setEditingId(null);
-      setStatus(
-        `Tarif de « ${target.title} » ${value ? `fixé à ${value} €` : "mis sur devis"} ✓`
-      );
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Enregistrement impossible.");
-    } finally {
-      setBusy(false);
-    }
-  }
+      return `Prix de « ${target.title} » : ${value ? `${value.toLocaleString("fr-FR")} €` : "sur devis"}.`;
+    });
+  };
 
-  async function toggleSold(id: string) {
+  const toggleSold = (id: string) => {
     const target = artworks.find((a) => a.id === id);
     if (!target) return;
-    setError("");
-    setStatus("");
-    setBusy(true);
-    try {
+    const nowSold = !target.sold;
+    void run(async () => {
       const next = artworks.map((a) => {
         if (a.id !== id) return a;
         const updated = { ...a };
-        if (a.sold) {
-          delete updated.sold;
-        } else {
-          updated.sold = true;
-        }
+        if (nowSold) updated.sold = true;
+        else delete updated.sold;
         return updated;
       });
-      const nowSold = !target.sold;
-      if (mode === "pc") {
-        await saveLocal(next);
-      } else {
-        await putFile(
-          token.trim(),
-          DEFAULT_REPO,
-          "data/artworks.json",
-          toBase64(`${JSON.stringify(next, null, 2)}\n`),
-          `${nowSold ? "Vendue" : "De nouveau disponible"} : ${target.title}`,
-          jsonSha ?? undefined
-        );
-        const fresh = await getFileText(token.trim(), DEFAULT_REPO, "data/artworks.json");
-        if (fresh) {
-          setArtworks(JSON.parse(fresh.text) as Artwork[]);
-          setJsonSha(fresh.sha);
-        }
-      }
-      setStatus(`« ${target.title} » ${nowSold ? "marquée vendue" : "remarquée disponible"} ✓`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Enregistrement impossible.");
-    } finally {
-      setBusy(false);
-    }
-  }
+      await commit(next, `${nowSold ? "Vendue" : "De nouveau disponible"} : ${target.title}`);
+      return `« ${target.title} » ${nowSold ? "marquée vendue" : "de nouveau disponible"}.`;
+    });
+  };
 
-  /** Publie la galerie du PC vers GitHub (commit + push via git local). */
-  async function publish() {
-    setPublishMsg("");
-    setError("");
-    setBusy(true);
-    try {
-      const r = await fetch(`${LOCAL_SERVER}/api/publish`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pw: ADMIN_PASSWORD }),
-      });
-      const d = await r.json();
-      if (!r.ok || !d.ok) throw new Error(d.error || "Publication impossible.");
-      setPublishMsg(`Publié ✓ — le site en ligne se met à jour dans ≈ 2 min.`);
-    } catch (e) {
-      setPublishMsg("");
-      setError(e instanceof Error ? e.message : "Publication impossible.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const publish = () =>
+    run(async () => {
+      if (link?.mode !== "pc") return;
+      await publishPc(link.session);
+      return "Galerie publiée : le site en ligne se met à jour dans 2 minutes environ.";
+    });
 
   /* ------------------------------------------------------------- */
-  /* Connexion après mot de passe : PC d'abord, sinon GitHub        */
+  /* Écrans                                                         */
   /* ------------------------------------------------------------- */
 
-  useEffect(() => {
-    if (!authed) return;
-    if (pcState === "checking") return;
-    if (pcState === "on" && artworks.length === 0 && !error) {
-      void loadLocal(ADMIN_PASSWORD).catch(() => {
-        /* l'UI affiche déjà l'état */
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authed, pcState]);
-
-  /* ------------------------------------------------------------- */
-  /* Écran de connexion                                             */
-  /* ------------------------------------------------------------- */
-
-  if (!authed) {
+  if (!ready) {
     return (
-      <div className="mx-auto max-w-md px-4 py-20">
-        <div className="card-glass rounded-2xl p-8">
-          <h1 className="flex items-center gap-3 text-2xl font-bold">
-            <BrushIcon className="h-7 w-7 text-[var(--magenta)]" />
-            Atelier
-          </h1>
-          <p className="mt-2 text-xs text-white/50">
-            Base de données : votre PC (aucun jeton nécessaire en local).
-          </p>
-          <form
-            className="mt-6 space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (pw === ADMIN_PASSWORD) {
-                setAuthed(true);
-                sessionStorage.setItem(PASSWORD_KEY, "1");
-              } else {
-                setPwError("Mot de passe incorrect.");
-              }
-            }}
-          >
-            <input
-              type="password"
-              value={pw}
-              onChange={(e) => setPw(e.target.value)}
-              placeholder="Mot de passe"
-              className={inputCls}
-              autoFocus
-            />
-            {pwError ? <p className="text-sm text-red-400">{pwError}</p> : null}
-            <button type="submit" className="btn-accent w-full rounded-lg py-2.5 font-bold">
-              Entrer
-            </button>
-          </form>
-        </div>
-      </div>
+      <section className="bloc bloc-noir min-h-[60svh] py-20">
+        <p className="wrap soft">Ouverture de l'atelier…</p>
+      </section>
     );
   }
 
-  /* ------------------------------------------------------------- */
-  /* Panneau                                                        */
-  /* ------------------------------------------------------------- */
+  if (!link) {
+    return (
+      <AtelierLogin
+        key={notice}
+        notice={notice}
+        savedGithubToken={savedToken}
+        onSession={enterPc}
+        onGithub={enterGithub}
+      />
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <h1 className="flex items-center gap-3 text-3xl font-black">
-        <BrushIcon className="h-8 w-8 text-[var(--amber)]" />
-        <span className="accent-amber">Atelier</span>
-      </h1>
-
-      {/* Bandeau mode : PC (base de données) ou GitHub (secours) */}
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
-        {pcState === "checking" ? (
-          <span className="text-white/50">Recherche de la base locale…</span>
-        ) : pcState === "on" ? (
-          <span className="flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-300">
-            ● Base de données : ce PC (localhost:3311)
-          </span>
-        ) : (
-          <span className="flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-300">
-            ● PC non joignable — mode GitHub (jeton requis)
-          </span>
-        )}
-        {mode === "github" ? (
-          <span className="rounded-full border border-white/20 px-3 py-1.5 text-xs text-white/60">
-            connecté au dépôt GitHub
-          </span>
-        ) : null}
-      </div>
-
-      {pcState === "off" && mode !== "github" ? (
-        <div className="card-glass mt-5 rounded-2xl p-6">
-          <h2 className="text-base font-bold">Mode GitHub (secours)</h2>
-          <p className="mt-1 text-xs text-white/50">
-            Le serveur local ne tourne pas sur ce PC. Démarrez-le avec{" "}
-            <code className="rounded bg-white/10 px-1.5 py-0.5">atelier.bat</code> (double-clic à
-            la racine du projet), ou connectez-vous au dépôt GitHub avec un jeton.
-          </p>
-          {!hasSavedToken ? (
-            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-              <input
-                type="password"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="Jeton GitHub (secours)"
-                className={inputCls}
-              />
-              <button
-                onClick={connectGithub}
-                disabled={busy || !token.trim()}
-                className="btn-accent shrink-0 rounded-lg px-5 py-2 font-semibold disabled:opacity-50"
-              >
-                {busy ? "Connexion…" : "Connecter"}
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={connectGithub}
-              disabled={busy}
-              className="btn-accent mt-3 rounded-lg px-5 py-2 font-semibold disabled:opacity-50"
-            >
-              {busy ? "Connexion…" : "Connecter au dépôt (jeton enregistré)"}
-            </button>
-          )}
-          {needsToken ? (
-            <p className="mt-2 text-xs text-white/40">
-              Jeton : GitHub → Settings → Developer settings → Fine-grained tokens →
-              « Contents: Read and write ».
+    <>
+      <section className="bloc bloc-noir halftone pb-[clamp(2.5rem,6vw,4rem)] pt-[clamp(2rem,5vw,3.5rem)]">
+        <div className="wrap relative flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+          <div>
+            <h1 className="poster t-lg">L'atelier</h1>
+            <p className="soft small mt-3 flex items-center gap-2">
+              <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-full bg-[#25d366]" />
+              {link.mode === "pc"
+                ? "Connecté à la base de cet ordinateur. Les changements restent ici jusqu'à « Publier »."
+                : "Connecté au dépôt GitHub. Chaque changement est mis en ligne directement."}
             </p>
-          ) : null}
-        </div>
-        ) : null}
-
-      {artworks.length > 0 || mode === "pc" || connected ? (
-        <>
-          {/* Publication (mode PC uniquement) */}
-          {mode === "pc" ? (
-            <div className="card-glass mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-5">
-              <p className="text-sm text-white/70">
-                <span className="font-semibold text-white">Publier sur le site en ligne</span>{" "}
-                — envoie la galerie de votre PC vers GitHub (le site se met à jour tout seul).
-              </p>
-              <button
-                type="button"
-                onClick={publish}
-                disabled={busy}
-                className="btn-accent rounded-lg px-6 py-2.5 font-bold disabled:opacity-50"
-              >
-                {busy ? "Publication…" : "Publier"}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+            {link.mode === "pc" ? (
+              <button type="button" onClick={() => void publish()} disabled={busy} className="btn">
+                {busy ? "Patientez…" : "Publier sur le site"}
               </button>
-            </div>
-          ) : null}
+            ) : (
+              <button type="button" onClick={forgetGithubKey} className="link small">
+                Oublier la clé sur cet appareil
+              </button>
+            )}
+            <button type="button" onClick={() => void signOut()} className="btn btn-ghost btn-sm">
+              Se déconnecter
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="bloc bloc-papier pb-[clamp(4rem,10vw,7rem)] pt-[clamp(2.5rem,6vw,4rem)]">
+        <div className="wrap">
+          <div aria-live="polite" className="min-h-[1.5rem]">
+            {error ? (
+              <p role="alert" className="border-l-4 border-[var(--magenta)] pl-3 font-semibold">
+                {error}
+              </p>
+            ) : status ? (
+              <p className="flex items-center gap-2 border-l-4 border-[#1a9c4a] pl-3 font-semibold">
+                <CanvasCheckIcon className="h-5 w-5" /> {status}
+              </p>
+            ) : null}
+          </div>
 
           {/* Ajouter une œuvre */}
-          <div className="card-glass mt-5 rounded-2xl p-6">
-            <h2 className="text-base font-bold">Ajouter une œuvre</h2>
-            <form onSubmit={add} className="mt-3 space-y-3">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <form onSubmit={add} className="mt-6 border-t-2 border-[var(--fg)] pt-6">
+            <h2 className="poster t-md">Ajouter une toile</h2>
+            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+              <label className="field-label">
+                Titre
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
-                  placeholder="Titre de l'œuvre *"
-                  className={inputCls}
+                  placeholder="NEON CANDY N°2"
+                  className="field mt-2 font-normal"
                 />
-                <div className="flex flex-col gap-2">
-                  <label className="flex items-center gap-2 text-xs text-white/50">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-                      className="text-xs"
-                    />
-                    <span>ou</span>
-                  </label>
-                  <input
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="… ou URL d'image (ex. Instagram)"
-                    className={inputCls}
-                  />
-                </div>
-              </div>
-              <input
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                inputMode="decimal"
-                placeholder="Prix fixe en € (optionnel — vide = sur devis)"
-                className={`${inputCls} sm:max-w-xs`}
-              />
-              {error ? <p className="text-sm text-red-400">{error}</p> : null}
-              {status ? (
-                <p className="flex items-center gap-2 text-sm text-emerald-400">
-                  <CanvasCheckIcon className="h-4 w-4" /> {status}
-                </p>
-              ) : null}
-              <button
-                type="submit"
-                disabled={busy}
-                className="btn-accent rounded-lg px-6 py-2.5 font-bold disabled:opacity-50"
-              >
-                {busy ? "Ajout en cours…" : "Ajouter l'œuvre"}
-              </button>
-            </form>
-          </div>
-
-          {/* Œuvres en ligne */}
-          <div className="mt-6">
-            <h2 className="text-base font-bold text-white/70">
-              Œuvres ({artworks.length})
-            </h2>
-            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {artworks.map((a) => (
-                <div key={a.id} className="rounded-xl bg-white/5 p-3">
-                  <div className="flex items-center gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={publicImage(a.image)}
-                      alt={a.title}
-                      loading="lazy"
-                      className="h-14 w-10 shrink-0 rounded object-cover bg-white/10"
-                      onError={(e) => {
-                        const img = e.currentTarget;
-                        const alt = img.src.includes(DEPLOY_BASE)
-                          ? img.src.replace(DEPLOY_BASE, "")
-                          : DEPLOY_BASE + img.getAttribute("src");
-                        if (!img.dataset.retried) {
-                          img.dataset.retried = "1";
-                          img.src = alt;
-                        }
-                      }}
-                    />
-                    <span className="min-w-0 flex-1 truncate text-sm text-white">{a.title}</span>
-                    <button
-                      type="button"
-                      onClick={() => remove(a.id)}
-                      disabled={busy}
-                      title="Supprimer cette œuvre"
-                      className="shrink-0 rounded-md border border-white/15 px-2 py-1 text-xs text-white/50 transition hover:border-red-400 hover:text-red-400 disabled:opacity-40"
-                    >
-                      Suppr.
-                    </button>
-                  </div>
-                  {/* Statut + tarif : édition inline */}
-                  <div className="mt-2 flex items-center justify-between gap-2 pl-[3.25rem]">
-                    <button
-                      type="button"
-                      onClick={() => void toggleSold(a.id)}
-                      disabled={busy}
-                      title="Basculer entre « vendue » et « disponible »"
-                      className={`rounded-md border px-2 py-1 text-xs font-semibold transition disabled:opacity-40 ${
-                        a.sold
-                          ? "border-[var(--magenta)]/60 bg-[var(--magenta)]/10 text-[var(--magenta)]"
-                          : "border-white/15 text-white/60 hover:border-[var(--teal)] hover:text-[var(--teal)]"
-                      }`}
-                    >
-                      {a.sold ? "Vendue ✓" : "Disponible"}
-                    </button>
-                    {editingId === a.id ? (
-                      <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                        <input
-                          value={editPrice}
-                          onChange={(e) => setEditPrice(e.target.value)}
-                          inputMode="decimal"
-                          placeholder="ex. 950 (vide = sur devis)"
-                          className="w-full rounded-md border border-white/15 bg-[var(--ink-soft)] px-2 py-1 text-xs outline-none focus:border-[var(--amber)]"
-                          autoFocus
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              void savePrice(a.id);
-                            }
-                            if (e.key === "Escape") setEditingId(null);
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => void savePrice(a.id)}
-                          disabled={busy}
-                          className="btn-accent shrink-0 rounded-md px-2.5 py-1 text-xs font-bold disabled:opacity-40"
-                        >
-                          OK
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingId(null)}
-                          className="shrink-0 rounded-md border border-white/15 px-2 py-1 text-xs text-white/50"
-                        >
-                          Annuler
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <span className="text-xs text-white/60">
-                          {a.priceEur && !a.priceOnRequest ? (
-                            <>
-                              <span className="font-bold text-[var(--amber)]">
-                                {a.priceEur.toLocaleString("fr-FR")} €
-                              </span>{" "}
-                              <span className="text-white/35">prix fixe</span>
-                            </>
-                          ) : (
-                            <span className="text-white/35">sur devis</span>
-                          )}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingId(a.id);
-                            setEditPrice(
-                              a.priceEur && !a.priceOnRequest ? String(a.priceEur) : ""
-                            );
-                          }}
-                          className="rounded-md border border-white/15 px-2 py-1 text-xs text-white/60 transition hover:border-[var(--amber)] hover:text-[var(--amber)]"
-                        >
-                          Fixer le prix
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
+              </label>
+              <label className="field-label">
+                Prix fixe en € <span className="faint font-normal">(vide = sur devis)</span>
+                <input
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  inputMode="decimal"
+                  placeholder="950"
+                  className="field mt-2 font-normal"
+                />
+              </label>
+              <label className="field-label">
+                Photo de la toile
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                  className="field mt-2 py-2.5 font-normal file:mr-3 file:border-0 file:bg-[var(--noir)] file:px-3 file:py-1.5 file:font-bold file:text-[var(--papier)]"
+                />
+              </label>
+              <label className="field-label">
+                Ou adresse d'une image <span className="faint font-normal">(Instagram…)</span>
+                <input
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  inputMode="url"
+                  placeholder="https://…"
+                  className="field mt-2 font-normal"
+                />
+              </label>
             </div>
-          </div>
-        </>
-      ) : null}
-    </div>
+            <button type="submit" disabled={busy} className="btn mt-6">
+              {busy ? "Enregistrement…" : "Ajouter la toile"}
+            </button>
+          </form>
+
+          {/* Les œuvres */}
+          <h2 className="poster t-md mt-[clamp(3rem,7vw,5rem)] border-t-2 border-[var(--fg)] pt-6">
+            Les toiles ({artworks.length})
+          </h2>
+          <ul className="mt-6 grid grid-cols-1 gap-x-8 gap-y-2 md:grid-cols-2">
+            {artworks.map((a) => (
+              <li key={a.id} className="flex gap-4 border-b border-[var(--line)] py-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={publicImage(a.image)}
+                  alt=""
+                  loading="lazy"
+                  className="h-20 w-14 shrink-0 bg-[var(--line)] object-cover"
+                  onError={(e) => {
+                    const img = e.currentTarget;
+                    if (img.dataset.retried) return;
+                    img.dataset.retried = "1";
+                    img.src = img.src.includes(DEPLOY_BASE)
+                      ? img.src.replace(DEPLOY_BASE, "")
+                      : DEPLOY_BASE + img.getAttribute("src");
+                  }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-bold">{a.title}</p>
+                  {editingId === a.id ? (
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <input
+                        value={editPrice}
+                        onChange={(e) => setEditPrice(e.target.value)}
+                        inputMode="decimal"
+                        placeholder="950 (vide = sur devis)"
+                        aria-label={`Prix de ${a.title} en euros`}
+                        className="field min-h-[2.75rem] w-44 py-1.5"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            savePrice(a.id);
+                          }
+                          if (e.key === "Escape") setEditingId(null);
+                        }}
+                      />
+                      <button type="button" onClick={() => savePrice(a.id)} disabled={busy} className="btn btn-sm">
+                        Enregistrer
+                      </button>
+                      <button type="button" onClick={() => setEditingId(null)} className="link small">
+                        Annuler
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="small mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                      {a.sold ? (
+                        <span className="dot-sold">Vendue</span>
+                      ) : (
+                        <span className="soft">
+                          {a.priceEur && !a.priceOnRequest
+                            ? `${a.priceEur.toLocaleString("fr-FR")} €`
+                            : "Sur devis"}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        className="link"
+                        onClick={() => {
+                          setEditingId(a.id);
+                          setEditPrice(a.priceEur && !a.priceOnRequest ? String(a.priceEur) : "");
+                        }}
+                      >
+                        Prix
+                      </button>
+                      <button type="button" className="link" disabled={busy} onClick={() => toggleSold(a.id)}>
+                        {a.sold ? "Remettre en vente" : "Marquer vendue"}
+                      </button>
+                      <button type="button" className="link" disabled={busy} onClick={() => remove(a.id)}>
+                        Supprimer
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    </>
   );
 }

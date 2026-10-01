@@ -43,9 +43,29 @@ GITHUB_PAGES=true npm run build   # même build que la mise en ligne
 
 Aperçu dans Claude Code : configuration `site` de `.claude/launch.json` (port 3210).
 
-Atelier (Windows, PC de l'artiste) : `atelier.bat` lance `local-server.mjs`
-(port 3311, écrit `data/artworks.json` et `public/artworks/`) et le site sur
-le port 3210, puis ouvre `/admin`.
+Atelier : double-clic sur `atelier.command` (Mac) ou `atelier.bat` (Windows).
+Lance la base de l'atelier `local-server.mjs` (port 3311, écrit
+`data/artworks.json` et `public/artworks/`) et le site sur le port 3210, puis
+ouvre `/admin/`. Base seule : `npm run atelier`. Changer le mot de passe depuis
+un terminal : `npm run atelier:mdp`.
+
+### Connexion à l'espace Atelier (`/admin/`)
+
+- **Sur l'ordinateur de l'atelier** : mot de passe vérifié par la base
+  (`local-server.mjs`). Seule son empreinte scrypt est enregistrée, dans
+  `data/.atelier-auth.json` (propre à chaque ordinateur, hors Git). Pas de
+  fichier = premier passage : l'écran propose de créer le mot de passe.
+- **Mot de passe oublié** : l'écran demande un code à 6 chiffres que la base
+  affiche dans SA fenêtre (Terminal ou fenêtre noire), valable 10 min.
+  Voir le code prouve qu'on est devant l'ordinateur.
+- **Sessions** : jeton aléatoire de 12 h (`Authorization: Bearer`), gardé dans
+  `sessionStorage` ; le mot de passe n'est jamais stocké par le navigateur.
+  5 essais ratés = blocage 10 min.
+- **Ailleurs** (base injoignable) : connexion au dépôt GitHub avec une clé
+  personnelle « Contents : Read and write », gardée dans `localStorage`.
+- La base n'accepte que les appels venant de `localhost` et de
+  `xtsr210.github.io` (CORS + contrôle de l'origine). Safari bloque l'appel du
+  site en ligne vers `localhost` : passer par `http://localhost:3210/admin/`.
 
 ## 4. Architecture
 
@@ -164,9 +184,8 @@ CSS** à partir de `--p`. Deux modes : `pin` (scène épinglée en `sticky`) et
    vignette a été produite, sinon l'image d'origine sert partout.
 8. **Prix** : l'estimation vient de la grille i-CAC (`lib/pricing.ts`) ; elle
    est toujours présentée comme indicative, le devis ferme vient de l'atelier.
-9. `/admin` : mot de passe et logique inchangés ; ne pas renommer les
-   variables CSS ni les classes héritées (`card-glass`, `btn-accent`,
-   `accent-text`, `accent-amber`).
+9. `/admin` : aucun mot de passe dans le code du site. Toute vérification se
+   fait dans `local-server.mjs` ; le client passe par `lib/atelier-api.ts`.
 
 ## 8. État actuel
 
@@ -220,3 +239,17 @@ mur, contraste du texte secondaire discret (`--fg-faint`), et
 `trailingSlash: true` (le préchargement du lien vers l'accueil demandait
 `/DavidDiotron_WebSite.txt`, introuvable sous GitHub Pages). Non corrigeable
 ici : la durée de cache, fixée à 10 minutes par GitHub Pages.
+
+### 1er octobre 2026 — Nouvelle connexion à l'atelier
+
+L'ancien mot de passe (`atelier-2026`) était écrit en clair dans le code du
+site, donc lisible par tout visiteur, et la base acceptait les appels de
+n'importe quel site. Remplacés par : empreinte scrypt sur l'ordinateur,
+création du mot de passe au premier passage, récupération par code affiché
+dans la fenêtre de la base, sessions de 12 h, limitation des essais,
+origines autorisées. Écran de connexion et panneau refaits dans le style du
+site ; ajout de `atelier.command` (Mac), `npm run atelier`, `npm run
+atelier:mdp`, et `noindex` sur `/admin/`. Vérifié de bout en bout sur une copie
+de la base : création, déconnexion, mauvais mot de passe, code oublié,
+rechargement de page, ajout d'une toile avec prix, refus d'une origine
+étrangère et d'un appel sans session.

@@ -4,6 +4,7 @@ out
 
 # Données privées : commandes clients + secrets (ne jamais publier)
 data/orders.json
+data/.atelier-auth.json
 .env.local
 .env*.local
 
